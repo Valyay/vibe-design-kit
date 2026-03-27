@@ -5,19 +5,22 @@
 When working in this directory, the following happens automatically:
 
 ### Before creating a new page
-1. Check existing routes — no conflicting or duplicate paths
-2. Check `screen-inventory.md` in the vault (verify against code)
-3. Check `user-flows.md` — how does this page fit into existing navigation?
-4. Check `entity-map.md` — what entities appear on this page?
-5. Identify which layout this page belongs to (authenticated, public, settings)
+1. **Input validation** (from root CLAUDE.md): check feasibility, architectural fit
+   (new layout needed? new auth? new data source?), side effects, scope
+2. Check existing routes — no conflicting or duplicate paths
+3. Check `screen-inventory.md` in the knowledge base (verify against code)
+4. Check `user-flows.md` — how does this page fit into existing navigation?
+5. Check `entity-map.md` — what entities appear on this page?
+6. Identify which layout this page belongs to (authenticated, public, settings)
 
 ### After creating or modifying a page
 1. Screenshot the page at desktop and mobile (Playwright MCP)
 2. Run accessibility check (A11y MCP or axe-core)
 3. Run lint and typecheck — no new errors
-4. Update `screen-inventory.md` in the vault
-5. Update `user-flows.md` if navigation changed
-6. Compare against baseline — show before/after to the designer
+4. **Self-review** (from root CLAUDE.md): architecture, logic, performance, security
+5. Update `screen-inventory.md` in the knowledge base
+6. Update `user-flows.md` if navigation changed
+7. Compare against baseline — show before/after to the designer
 
 ### Before committing changes to this directory
 1. Verify all page states: loading skeleton, error boundary, empty state, populated

@@ -5,10 +5,12 @@
 When working in this directory, the following happens automatically:
 
 ### Before creating a new component
-1. Search the codebase for similar components (grep, code-review-graph)
-2. Check `component-graph.md` in the vault (verify against code)
-3. If a similar component exists → tell the designer and suggest extending it
-4. Run `impeccable` or `web-design-guidelines` skill to validate the design approach
+1. **Input validation** (from root CLAUDE.md): check feasibility, architectural fit,
+   side effects (who else uses this component?), scope
+2. Search the codebase for similar components (grep, code-review-graph)
+3. Check `component-graph.md` in the knowledge base (verify against code)
+4. If a similar component exists → tell the designer and suggest extending it
+5. Run `impeccable` or `web-design-guidelines` skill to validate the design approach
 
 ### After creating or modifying a component
 1. Create or update a Storybook story (if Storybook is available)
@@ -16,9 +18,10 @@ When working in this directory, the following happens automatically:
    - Use Storybook MCP to verify the story renders correctly
 2. Run lint and typecheck — no new errors
 3. Run accessibility check (axe-core or A11y MCP)
-4. Screenshot the component at desktop and mobile (Playwright MCP)
-5. Update `component-graph.md` in the vault if the component is new
-6. Compare against baseline — show before/after to the designer
+4. **Self-review** (from root CLAUDE.md): architecture, logic, performance, security
+5. Screenshot the component at desktop and mobile (Playwright MCP)
+6. Update `component-graph.md` in the knowledge base if the component is new
+7. Compare against baseline — show before/after to the designer
 
 ### Before committing changes to this directory
 1. Verify all five states exist for data-displaying components:

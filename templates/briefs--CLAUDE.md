@@ -14,10 +14,13 @@ When the designer gives a task (in chat or as a brief file), the following happe
    - Text → follow the description and constraints
 2. Cross-reference with DESIGN.md tokens and component graph
 3. Verify against the actual code (code is source of truth, not vault)
-4. Capture baseline (screenshots + tests) BEFORE making changes
-5. Write test for expected behavior BEFORE implementing
-6. Implement
-7. Verify: test passes, baseline not worse, show diff to designer
+4. **Input validation** (from root CLAUDE.md): check feasibility, architectural fit,
+   side effects, scope. If there's a problem — tell the designer before proceeding.
+5. Capture baseline (screenshots + tests) BEFORE making changes
+6. Write test for expected behavior BEFORE implementing
+7. Implement
+8. **Self-review** (from root CLAUDE.md): architecture, logic, performance, security
+9. Verify: test passes, baseline not worse, show diff to designer
 
 ### After completing a task
 1. Offer to save context as a brief (if work was done entirely in chat)

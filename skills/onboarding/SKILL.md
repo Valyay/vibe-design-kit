@@ -412,7 +412,7 @@ List available MCP servers (use `claude mcp list` or check config).
 ### Recommend based on project stack
 
 | If project uses... | Recommend |
-|--------------------|---------—|
+|--------------------|-----------|
 | React / Next.js | react-best-practices, composition-patterns skills |
 | shadcn/ui | shadcn/ui skill |
 | Storybook | Storybook MCP server |
@@ -457,8 +457,8 @@ When the code changes, these documents become stale and must be updated
 
 ## Output location
 
-Place all files in the Obsidian vault project directory if configured,
-or in `docs/design-kit/` at the project root.
+Place all files in the knowledge base project directory if configured,
+or in `design-knowledge/` at the project root.
 
 Place screenshots in a `screenshots/` subdirectory next to the documents.
 

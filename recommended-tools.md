@@ -26,6 +26,7 @@ Setup script detects the project and suggests relevant tools from this list.
 | Tool | What it does | Install |
 |------|-------------|---------|
 | [superpowers](https://github.com/obra/superpowers) | Disciplined dev: TDD, planning, code review, debugging, verification. | `claude plugin add obra/superpowers` |
+| [code-review-graph](https://github.com/tirth8205/code-review-graph) | Knowledge graph for duplicate detection and codebase understanding. | `claude plugin add tirth8205/code-review-graph` |
 
 ## Framework-specific Skills
 
@@ -55,7 +56,7 @@ Setup script detects the project and suggests relevant tools from this list.
 
 | Server | What it does | Install |
 |--------|-------------|---------|
-| [MCPVault](https://github.com/bitbonsai/mcpvault) | Obsidian vault read/write/search. No Obsidian app needed — reads .md files directly. BM25 search. | `claude mcp add obsidian -- npx @bitbonsai/mcpvault@latest /path/to/vault` |
+| [MCPVault](https://github.com/bitbonsai/mcpvault) | Knowledge base read/write/search. Reads .md files directly — no Obsidian needed. BM25 search. | `claude mcp add obsidian -- npx @bitbonsai/mcpvault@latest /path/to/vault` |
 | [Storybook MCP](https://github.com/storybookjs/mcp) | Component knowledge: stories, variants, props, docs. | `npx storybook@latest add @storybook/addon-mcp` |
 | [A11y MCP](https://github.com/ronantakizawa/a11ymcp) | WCAG compliance: axe-core + Puppeteer. | `claude mcp add a11y-accessibility -- npx -y a11y-mcp-server` |
 
@@ -65,11 +66,10 @@ Setup script detects the project and suggests relevant tools from this list.
 |--------|-------------|---------|
 | [Framelink](https://github.com/GLips/Figma-Context-MCP) | Simplified Figma API for AI. Works with free Figma accounts. | `claude mcp add figma -- npx -y figma-developer-mcp --figma-api-key=KEY --stdio` |
 
-### Obsidian alternatives
+### Knowledge base MCP options (if not using MCPVault above)
 
 | Server | When to use | Install |
 |--------|------------|---------|
-| [MCPVault](https://github.com/bitbonsai/mcpvault) | **Recommended.** No Obsidian running needed. Direct file access. | `claude mcp add obsidian -- npx @bitbonsai/mcpvault@latest /path/to/vault` |
 | [Nexus](https://github.com/ProfSynapse/claudesidian-mcp) | Want chat inside Obsidian + MCP. Requires Obsidian running. | Obsidian plugin install |
 | [obsidian-claude-code-mcp](https://github.com/iansinnott/obsidian-claude-code-mcp) | Auto-discovery for Claude Code. Requires Obsidian running. | Obsidian plugin install |
 

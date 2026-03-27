@@ -12,7 +12,7 @@ set -euo pipefail
 #   3. Detects and bootstraps quality infrastructure
 #   4. Detects or installs Storybook
 #   5. Installs Claude Code skills and plugins
-#   6. Creates Obsidian vault from template
+#   6. Creates knowledge base from template
 #   7. Creates briefs/ directory
 #   8. Copies ready-made prompts
 #   9. Captures baseline (screenshots, test results)
@@ -21,7 +21,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TEMPLATES_DIR="$SCRIPT_DIR/templates"
 SKILLS_DIR="$SCRIPT_DIR/skills"
-VAULT_TEMPLATE_DIR="$SCRIPT_DIR/obsidian-vault-template"
+KB_TEMPLATE_DIR="$SCRIPT_DIR/knowledge-base"
 PROMPTS_DIR="$SCRIPT_DIR/prompts"
 TOTAL_STEPS=9
 
@@ -32,7 +32,7 @@ if [[ $# -lt 2 ]]; then
   echo ""
   echo "Arguments:"
   echo "  /path/to/client-repo   Path to the existing client repository"
-  echo "  project-name           Name for the project (used for Obsidian vault)"
+  echo "  project-name           Name for the project (used for knowledge base)"
   exit 1
 fi
 
@@ -87,28 +87,14 @@ pkg_add() {
   esac
 }
 
-echo "╔══════════════════════════════════════════════════╗"
-echo "║         Vibe Design Kit — Brownfield Setup       ║"
-echo "╠══════════════════════════════════════════════════╣"
-echo "║  Target:  $TARGET_REPO"
-echo "║  Project: $PROJECT_NAME"
-echo "║  Package: $PKG_MANAGER"
-echo "╚══════════════════════════════════════════════════╝"
+echo ""
+echo "  Vibe Design Kit — Brownfield Setup"
+echo "  Target:  $TARGET_REPO"
+echo "  Project: $PROJECT_NAME"
+echo "  Package: $PKG_MANAGER"
 echo ""
 
 # ── Helpers ──────────────────────────────────────────────
-
-copy_if_not_exists() {
-  local src="$1"
-  local dest="$2"
-  if [[ -f "$dest" ]]; then
-    echo "  ⏭  Already exists: $dest"
-  else
-    mkdir -p "$(dirname "$dest")"
-    cp "$src" "$dest"
-    echo "  ✓  Created: $dest"
-  fi
-}
 
 has_dependency() {
   local dep="$1"
@@ -120,26 +106,132 @@ has_script() {
   grep -qE "\"$script\"\\s*:" "$TARGET_REPO/package.json" 2>/dev/null
 }
 
+# ── Strategy selection ───────────────────────────────────
+# Detects what the project already has and asks the designer
+# how to handle conflicts.
+
+echo "  Scanning existing project configuration..."
+echo ""
+
+EXISTING=()
+[[ -f "$TARGET_REPO/CLAUDE.md" ]]              && EXISTING+=("CLAUDE.md")
+[[ -f "$TARGET_REPO/DESIGN.md" ]]              && EXISTING+=("DESIGN.md")
+[[ -f "$TARGET_REPO/.claude/settings.json" ]]  && EXISTING+=(".claude/settings.json")
+[[ -d "$TARGET_REPO/.claude/skills" ]]         && EXISTING+=(".claude/skills/")
+[[ -d "$TARGET_REPO/.husky" ]] || [[ -f "$TARGET_REPO/lefthook.yml" ]] && EXISTING+=("pre-commit hooks")
+
+if [[ ${#EXISTING[@]} -eq 0 ]]; then
+  echo "  No existing configuration found. Installing everything fresh."
+  STRATEGY="fresh"
+else
+  echo "  Found existing configuration:"
+  for item in "${EXISTING[@]}"; do
+    echo "    - $item"
+  done
+  echo ""
+  echo "  How should I handle existing configs?"
+  echo ""
+  echo "  1) Keep existing — only add where nothing exists"
+  echo "     (safest, won't change any of your current setup)"
+  echo ""
+  echo "  2) Merge — add vibe-design-kit rules alongside existing ones"
+  echo "     (recommended, extends your setup without breaking it)"
+  echo ""
+  echo "  3) Overwrite — replace existing configs with vibe-design-kit"
+  echo "     (clean start, but your current rules will be backed up)"
+  echo ""
+  read -rp "  Choose [1/2/3] (default: 2): " strategy_choice
+  strategy_choice="${strategy_choice:-2}"
+
+  case "$strategy_choice" in
+    1) STRATEGY="keep" ;;
+    3) STRATEGY="overwrite" ;;
+    *) STRATEGY="merge" ;;
+  esac
+  echo ""
+  echo "  Strategy: $STRATEGY"
+fi
+
+echo ""
+
+# Apply strategy to a config file:
+#   apply_config "source" "destination" "description"
+#
+# Behavior depends on $STRATEGY:
+#   fresh    → copy source to destination
+#   keep     → skip if destination exists, copy if not
+#   merge    → append/merge source into destination (caller handles merge logic)
+#   overwrite → backup destination, copy source
+apply_config() {
+  local src="$1"
+  local dest="$2"
+  local desc="$3"
+
+  if [[ ! -f "$dest" ]]; then
+    # No existing file → always install
+    mkdir -p "$(dirname "$dest")"
+    cp "$src" "$dest"
+    echo "  ✓  Created: $desc"
+    return 0  # installed
+  fi
+
+  case "$STRATEGY" in
+    fresh)
+      cp "$src" "$dest"
+      echo "  ✓  Created: $desc"
+      return 0
+      ;;
+    keep)
+      echo "  ⏭  Kept existing: $desc"
+      return 1  # skipped
+      ;;
+    merge)
+      echo "  ⊕  Merging: $desc"
+      return 0  # caller handles merge
+      ;;
+    overwrite)
+      cp "$dest" "${dest}.backup.$(date +%s)"
+      cp "$src" "$dest"
+      echo "  ✓  Overwritten (backup saved): $desc"
+      return 0
+      ;;
+  esac
+}
+
 # ── Step 1: Copy CLAUDE.md rules ────────────────────────
 
-echo "▸ Step 1/$TOTAL_STEPS: Copying CLAUDE.md rules..."
+echo "▸ Step 1/$TOTAL_STEPS: Setting up CLAUDE.md rules..."
 
-copy_if_not_exists "$TEMPLATES_DIR/CLAUDE.md" "$TARGET_REPO/CLAUDE.md"
+# Root CLAUDE.md — merge appends vdk section, keep skips, overwrite replaces
+if apply_config "$TEMPLATES_DIR/CLAUDE.md" "$TARGET_REPO/CLAUDE.md" "CLAUDE.md (root)"; then
+  if [[ "$STRATEGY" == "merge" ]] && [[ -f "$TARGET_REPO/CLAUDE.md" ]]; then
+    # Append vdk rules to existing CLAUDE.md if not already present
+    if ! grep -q "vibe-design-kit" "$TARGET_REPO/CLAUDE.md" 2>/dev/null; then
+      echo "" >> "$TARGET_REPO/CLAUDE.md"
+      echo "<!-- vibe-design-kit rules below -->" >> "$TARGET_REPO/CLAUDE.md"
+      cat "$TEMPLATES_DIR/CLAUDE.md" >> "$TARGET_REPO/CLAUDE.md"
+      echo "  ✓  Appended vibe-design-kit rules to existing CLAUDE.md"
+    else
+      echo "  ⏭  vibe-design-kit rules already present in CLAUDE.md"
+    fi
+  fi
+fi
 
+# Folder-level CLAUDE.md files
 for template in "$TEMPLATES_DIR"/*--CLAUDE.md; do
   [[ -f "$template" ]] || continue
   basename="$(basename "$template")"
   folder_path="${basename%%--CLAUDE.md}"
   dest="$TARGET_REPO/$folder_path/CLAUDE.md"
-  copy_if_not_exists "$template" "$dest"
+  apply_config "$template" "$dest" "$folder_path/CLAUDE.md"
 done
 
 echo ""
 
 # ── Step 2: Create DESIGN.md ────────────────────────────
 
-echo "▸ Step 2/$TOTAL_STEPS: Creating DESIGN.md..."
-copy_if_not_exists "$TEMPLATES_DIR/DESIGN.md" "$TARGET_REPO/DESIGN.md"
+echo "▸ Step 2/$TOTAL_STEPS: Setting up DESIGN.md..."
+apply_config "$TEMPLATES_DIR/DESIGN.md" "$TARGET_REPO/DESIGN.md" "DESIGN.md"
 echo ""
 
 # ── Step 3: Quality infrastructure ──────────────────────
@@ -298,7 +390,7 @@ else
     read -rp "  Install missing tools? (y/N) " install_quality
 
     if [[ "$install_quality" =~ ^[Yy]$ ]]; then
-      local _saved_dir="$PWD"
+      _saved_dir="$PWD"
       cd "$TARGET_REPO"
 
       for tool in "${MISSING_QUALITY[@]}"; do
@@ -381,18 +473,25 @@ echo ""
 echo "▸ Step 5/$TOTAL_STEPS: Installing skills, plugins, and MCP servers..."
 
 # ── Copy custom skills (onboarding, sync) ────────────────
+# Skills are namespaced in separate directories — low conflict risk.
+# prefix with vdk- to make them identifiable and removable.
 echo ""
 echo "  Custom skills (unique to vibe-design-kit):"
 for skill_dir in "$SKILLS_DIR"/*/; do
   [[ -d "$skill_dir" ]] || continue
   skill_name="$(basename "$skill_dir")"
-  dest_skill="$TARGET_REPO/.claude/skills/$skill_name"
+  dest_skill="$TARGET_REPO/.claude/skills/vdk-$skill_name"
   if [[ -d "$dest_skill" ]]; then
-    echo "    ⏭  $skill_name (already exists)"
+    if [[ "$STRATEGY" == "overwrite" ]]; then
+      cp "$skill_dir"SKILL.md "$dest_skill/SKILL.md"
+      echo "    ✓  vdk-$skill_name (overwritten)"
+    else
+      echo "    ⏭  vdk-$skill_name (already exists)"
+    fi
   else
     mkdir -p "$dest_skill"
     cp "$skill_dir"SKILL.md "$dest_skill/SKILL.md"
-    echo "    ✓  $skill_name"
+    echo "    ✓  vdk-$skill_name"
   fi
 done
 
@@ -400,7 +499,11 @@ done
 echo ""
 echo "  External skills and plugins:"
 
-if command -v claude &> /dev/null; then
+# In "keep" strategy, skip installing external plugins if project already has .claude/
+if [[ "$STRATEGY" == "keep" ]] && [[ -f "$TARGET_REPO/.claude/settings.json" ]]; then
+  echo "    ⏭  Strategy is 'keep' — not installing external plugins."
+  echo "    See recommended-tools.md for tools you can install manually."
+elif command -v claude &> /dev/null; then
   # superpowers — TDD, planning, code review, debugging
   echo "    Installing superpowers (TDD, planning, code review)..."
   (cd "$TARGET_REPO" && claude plugin add obra/superpowers 2>/dev/null) \
@@ -428,6 +531,10 @@ fi
 echo ""
 echo "  Design quality skills:"
 
+if [[ "$STRATEGY" == "keep" ]] && [[ -d "$TARGET_REPO/.claude/skills" ]]; then
+  echo "    ⏭  Strategy is 'keep' — skipping skill installs."
+else
+
 echo "    Installing impeccable (typography, color, spatial design, motion)..."
 (cd "$TARGET_REPO" && npx skills add pbakaus/impeccable 2>/dev/null) \
   && echo "    ✓  impeccable" \
@@ -452,8 +559,8 @@ echo "    Installing playwright-skill (70+ E2E testing guides)..."
   && echo "    ✓  playwright-skill" \
   || echo "    ⚠  playwright-skill: npx skills add testdino-hq/playwright-skill"
 
-# Vitest skill — only if the project uses vitest
-if has_dependency "vitest"; then
+# Vitest skill — only if the project uses vitest and Claude CLI is available
+if has_dependency "vitest" && command -v claude &> /dev/null; then
   echo "    Installing vitest-skill..."
   (cd "$TARGET_REPO" && claude plugin add jezweb/claude-skills 2>/dev/null) \
     && echo "    ✓  vitest-skill" \
@@ -475,7 +582,7 @@ else
 fi
 
 # shadcn/ui
-if [[ -f "$TARGET_REPO/components.json" ]] || grep -rq "shadcn" "$TARGET_REPO/package.json" 2>/dev/null; then
+if [[ -f "$TARGET_REPO/components.json" ]] || grep -q "shadcn" "$TARGET_REPO/package.json" 2>/dev/null; then
   echo "    Installing shadcn/ui skill..."
   (cd "$TARGET_REPO" && npx shadcn@latest add skill 2>/dev/null) \
     && echo "    ✓  shadcn/ui skill" \
@@ -483,6 +590,8 @@ if [[ -f "$TARGET_REPO/components.json" ]] || grep -rq "shadcn" "$TARGET_REPO/pa
 else
   echo "    ⏭  No shadcn/ui detected, skipping"
 fi
+
+fi  # end strategy=keep guard for skills
 
 # ── MCP servers ──────────────────────────────────────────
 echo ""
@@ -518,27 +627,27 @@ fi
 
 echo ""
 
-# ── Step 6: Create Obsidian vault ────────────────────────
+# ── Step 6: Create knowledge base ────────────────────────
 
-echo "▸ Step 6/$TOTAL_STEPS: Creating Obsidian vault..."
+echo "▸ Step 6/$TOTAL_STEPS: Creating knowledge base..."
 
-VAULT_DIR="$TARGET_REPO/obsidian-vault/$PROJECT_NAME"
+KB_DIR="$TARGET_REPO/design-knowledge/$PROJECT_NAME"
 
-# MCPVault — connect Obsidian vault to Claude Code
-if command -v claude &> /dev/null; then
-  echo "  Connecting vault to Claude Code via MCPVault..."
-  (claude mcp add obsidian -- npx @bitbonsai/mcpvault@latest "$VAULT_DIR" 2>/dev/null) \
-    && echo "  ✓  MCPVault connected: AI can read/write/search the vault" \
-    || echo "  ⚠  MCPVault: claude mcp add obsidian -- npx @bitbonsai/mcpvault@latest $VAULT_DIR"
+if [[ -d "$KB_DIR" ]]; then
+  echo "  ⏭  Knowledge base already exists: $KB_DIR"
+else
+  mkdir -p "$KB_DIR/screenshots" "$KB_DIR/screenshots/components"
+  cp -r "$KB_TEMPLATE_DIR"/_project-template/* "$KB_DIR/"
+  cp "$KB_TEMPLATE_DIR/CLAUDE.md" "$TARGET_REPO/design-knowledge/CLAUDE.md"
+  echo "  ✓  Vault created: $KB_DIR"
 fi
 
-if [[ -d "$VAULT_DIR" ]]; then
-  echo "  ⏭  Vault already exists: $VAULT_DIR"
-else
-  mkdir -p "$VAULT_DIR/screenshots"
-  cp -r "$VAULT_TEMPLATE_DIR"/_project-template/* "$VAULT_DIR/"
-  cp "$VAULT_TEMPLATE_DIR/CLAUDE.md" "$TARGET_REPO/obsidian-vault/CLAUDE.md"
-  echo "  ✓  Vault created: $VAULT_DIR"
+# MCPVault — connect knowledge base to Claude Code (reads .md files directly)
+if command -v claude &> /dev/null; then
+  echo "  Connecting vault to Claude Code via MCPVault..."
+  (claude mcp add obsidian -- npx @bitbonsai/mcpvault@latest "$KB_DIR" 2>/dev/null) \
+    && echo "  ✓  MCPVault connected: AI can read/write/search the vault" \
+    || echo "  ⚠  MCPVault: claude mcp add obsidian -- npx @bitbonsai/mcpvault@latest \"$KB_DIR\""
 fi
 
 echo ""
@@ -582,7 +691,7 @@ echo ""
 
 echo "▸ Step 9/$TOTAL_STEPS: Capturing baseline..."
 
-BASELINE_DIR="$TARGET_REPO/obsidian-vault/$PROJECT_NAME/baseline"
+BASELINE_DIR="$TARGET_REPO/design-knowledge/$PROJECT_NAME/baseline"
 mkdir -p "$BASELINE_DIR"
 
 # Record what quality tools exist and their current output
@@ -623,7 +732,7 @@ echo "  Recording quality baseline..."
   if has_script "test"; then
     echo "## Tests"
     echo '```'
-    (cd "$TARGET_REPO" && $PKG_RUN test -- --run 2>&1 | tail -20) || true
+    (cd "$TARGET_REPO" && CI=true $PKG_RUN test 2>&1 | tail -20) || true
     echo '```'
     echo ""
   fi
@@ -639,18 +748,13 @@ echo ""
 
 # ── Done ─────────────────────────────────────────────────
 
-echo "╔══════════════════════════════════════════════════╗"
-echo "║                    Setup complete                ║"
-echo "╠══════════════════════════════════════════════════╣"
-echo "║                                                  ║"
-echo "║  Next steps:                                     ║"
-echo "║                                                  ║"
-echo "║  1. Fill in DESIGN.md with your design tokens    ║"
-echo "║  2. Open Claude Code in the project:             ║"
-echo "║     cd $TARGET_REPO && claude"
-echo "║  3. Run the onboarding prompt:                   ║"
-echo "║     Paste contents of prompts/onboarding.md      ║"
-echo "║  4. Open the Obsidian vault in Obsidian:         ║"
-echo "║     $VAULT_DIR"
-echo "║                                                  ║"
-echo "╚══════════════════════════════════════════════════╝"
+echo ""
+echo "  Setup complete!"
+echo ""
+echo "  Next steps:"
+echo "  1. Fill in DESIGN.md with your design tokens"
+echo "  2. Open Claude Code: cd $TARGET_REPO && claude"
+echo "  3. Run onboarding: paste contents of prompts/onboarding.md"
+echo "  4. Knowledge base: $KB_DIR"
+echo "     (open with Obsidian, VS Code, or any editor)"
+echo ""

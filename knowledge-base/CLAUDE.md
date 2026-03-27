@@ -1,15 +1,21 @@
-# Obsidian Vault — AI Rules
+# Knowledge Base — AI Rules
 
-**Code is the source of truth. This vault is a cache.**
+**Code is the source of truth. This knowledge base is a cache.**
 
-The vault helps the designer understand the project without reading code.
-But it can go stale. Code changes constantly — the vault doesn't update itself.
+These are markdown files that help the designer understand the project without reading code.
+They can go stale. Code changes constantly — these files don't update themselves.
 
-When vault and code disagree → **trust the code, update the vault.**
+When knowledge base and code disagree → **trust the code, update the docs.**
 
-The designer reads and edits this vault. AI reads, updates, and respects designer's annotations.
+The designer can view and edit these files with any tool:
+- **Obsidian** — best experience (graph view, backlinks, search)
+- **VS Code** — markdown preview works fine
+- **Any text editor** — they're just .md files
+- **AI reads them directly** — via MCPVault MCP or by reading from disk
 
-## Vault structure
+The designer reads and edits these files. AI reads, updates, and respects designer's annotations.
+
+## Structure
 
 ### Primary documents (read first)
 
@@ -28,7 +34,7 @@ visual-language.md      — What is the current design system, honestly?
 token-audit.md          — Raw data: all tokens and hardcoded values
 architecture.md         — Tech stack, build tools, testing setup
 baseline/               — Quality snapshot: lint, tests, typecheck results
-_sync-log.md            — History of vault updates
+_sync-log.md            — History of knowledge base updates
 ```
 
 ### Detail layer (per-item deep dives)
@@ -50,7 +56,7 @@ screenshots/components/ — Storybook screenshots (if available)
 
 ## Designer annotations
 
-The designer WILL edit vault files directly. Their notes are sacred.
+The designer WILL edit knowledge base files directly. Their notes are sacred.
 
 ### How to recognize annotations
 
@@ -70,24 +76,24 @@ The designer WILL edit vault files directly. Their notes are sacred.
   ```
 - When in doubt about whether something was written by the designer, treat it as an annotation
 
-## Vault freshness
+## Freshness
 
-The vault is always potentially stale. Code changes every commit; the vault only
+The knowledge base is always potentially stale. Code changes every commit; the knowledge base only
 updates when someone runs sync or when AI updates it after a task.
 
-### Before using vault content
+### Before using knowledge base content
 
 1. If the task touches specific components or pages, **verify against the code** first.
    Don't trust component-graph.md blindly — the component may have been renamed or removed.
 2. Check `_sync-log.md` for the last sync date.
 3. If last sync was more than a week ago, or `git log` shows significant changes,
    suggest running the sync skill before starting work.
-4. When you find vault content that contradicts the code, **update the vault immediately** —
+4. When you find knowledge base content that contradicts the code, **update the knowledge base immediately** —
    don't wait for a sync.
 
 ### After completing a task
 
-Update relevant vault documents:
+Update relevant knowledge base documents:
 - **New component** → add to `component-graph.md`
 - **New page** → add to `screen-inventory.md`, capture screenshot
 - **New flow** → add to `user-flows.md`
@@ -98,7 +104,7 @@ Update relevant vault documents:
 
 ### Sync log
 
-After any vault update, append to `_sync-log.md`:
+After any knowledge base update, append to `_sync-log.md`:
 ```markdown
 ## YYYY-MM-DD HH:MM — [manual update | sync skill | post-task update]
 - Updated: component-graph.md (added PricingCard)
@@ -129,7 +135,7 @@ After any vault update, append to `_sync-log.md`:
 
 ### Never
 - Delete or overwrite designer annotations
-- Trust vault over code — code always wins
-- Assume vault content is current without verifying against the codebase
+- Trust knowledge base over code — code always wins
+- Assume knowledge base content is current without verifying against the codebase
 - Ignore entity relationships when building UI
 - Skip quality checks because "they weren't there before"

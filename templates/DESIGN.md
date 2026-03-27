@@ -1,7 +1,7 @@
 # Visual Identity
 
-> Fill in this file with your project's design tokens and visual guidelines.
-> AI will use this as the single source of truth for all visual decisions.
+> Fill in this file with the project's design intent: tokens and visual guidelines.
+> When this file and the code's token system disagree, the code wins — flag the discrepancy.
 > Delete the placeholder comments as you fill in real values.
 
 ## Brand

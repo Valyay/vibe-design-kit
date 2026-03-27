@@ -15,7 +15,14 @@ When working in this directory, the following happens automatically:
 2. Run ALL existing E2E tests — nothing must break
 3. Add visual regression checkpoints (`toHaveScreenshot()`)
 4. Add accessibility check (`@axe-core/playwright` or A11y MCP)
-5. Show results to the designer: passed/failed, screenshot diffs
+5. **Self-review** (from root CLAUDE.md): check test logic, edge cases, selector stability
+6. Show results to the designer: passed/failed, screenshot diffs
+
+### Before committing test changes
+1. Verify all tests pass (no skipped, no flaky)
+2. Verify accessible selectors used (no CSS classes or DOM structure)
+3. Verify screenshot baselines are committed
+4. Verify no hardcoded test data that would break in other environments
 
 ### When the designer describes a user flow
 1. Parse the flow into test steps automatically

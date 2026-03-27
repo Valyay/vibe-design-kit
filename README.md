@@ -28,10 +28,10 @@ The script will:
 
 - Copy `CLAUDE.md` rules (root + folder-level) into the client repo
 - Create a `DESIGN.md` template for visual identity
-- Install Claude Code skills and plugins
-- Build a knowledge graph of the codebase (via code-review-graph)
-- Create an Obsidian vault from template for persistent project memory
-- Copy ready-made prompts
+- Install Claude Code skills, plugins, and MCP servers
+- Detect and bootstrap missing quality tools (linter, tests, Storybook)
+- Create a knowledge base from template for persistent project memory
+- Copy ready-made prompts and brief examples
 
 ## What's inside
 
@@ -56,7 +56,7 @@ vibe-design-kit/
 │   ├── onboarding/SKILL.md          # Full project analysis for designer
 │   └── sync/SKILL.md                # Keep vault in sync with code changes
 │
-├── obsidian-vault-template/         # Persistent memory (code is source of truth)
+├── knowledge-base/                  # Project knowledge (code is source of truth)
 │   ├── CLAUDE.md
 │   └── _project-template/
 │       ├── product-overview.md      # What is this product?
@@ -100,8 +100,10 @@ vibe-design-kit/
 | Tool | What it does |
 |------|-------------|
 | [superpowers](https://github.com/obra/superpowers) | TDD, planning, code review, debugging |
+| [impeccable](https://github.com/pbakaus/impeccable) | Typography, color, spatial design, motion, UX writing |
 | [web-design-guidelines](https://github.com/vercel-labs/agent-skills) | 100+ UI quality rules |
 | [frontend-design](https://github.com/anthropics/skills) | Anti-AI-slop, distinctive visuals |
+| [playwright-skill](https://github.com/testdino-hq/playwright-skill) | 70+ E2E testing guides |
 | [tdd-guard](https://github.com/nizos/tdd-guard) | Enforces test-first workflow |
 | [code-review-graph](https://github.com/tirth8205/code-review-graph) | Knowledge graph for duplicate detection |
 

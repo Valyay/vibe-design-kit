@@ -42,7 +42,7 @@ Run the **onboarding** skill. Start by asking me a few questions — then analyz
    How many Storybook stories exist? What's the test coverage like?
    This is our baseline — every change must not make it worse.
 
-Place everything in the Obsidian vault. Put screenshots in `screenshots/`.
+Place everything in the knowledge base (`design-knowledge/`). Put screenshots in `screenshots/`.
 
 Walk me through the summary first:
 - The product in one sentence

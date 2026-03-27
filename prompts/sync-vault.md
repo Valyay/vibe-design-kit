@@ -4,7 +4,7 @@
 
 ---
 
-Sync the Obsidian vault with the current state of the code.
+Sync the knowledge base with the current state of the code.
 
 1. Check git log since the last sync — what files changed?
 2. Compare each vault document against the current codebase:

@@ -20,14 +20,14 @@ they happen as part of every change.
 - `briefs/CLAUDE.md` — auto: read brief, cross-reference vault, capture baseline
 
 These auto-triggers replace manual prompts. The designer says "build X" —
-you automatically check for duplicates, write the test first, validate tokens,
-check accessibility, screenshot, and update the vault. No need to ask.
+you automatically follow the Input validation checks and the 7-step workflow defined below.
+No need for the designer to ask for quality checks, tests, or reviews.
 
 ## Source of truth
 
 **Code is the primary source of truth. Always.**
 
-The codebase reflects the real state of the system. The Obsidian vault, DESIGN.md,
+The codebase reflects the real state of the system. The knowledge base, DESIGN.md,
 briefs, and all documentation are secondary — they describe the code, not the other way around.
 
 When vault and code disagree:
@@ -67,8 +67,12 @@ If the designer has not provided enough context, ask for only what is missing:
 2. **Who** uses it and **when** (context of use)
 3. **Constraints** — device, performance budget, accessibility level, brand taste
 
-A Figma link and "make this" is enough. A screenshot and "like this but in our style"
-is enough. Do not demand all three if the intent is clear.
+A Figma link and "make this" is enough context from the designer.
+A screenshot and "like this but in our style" is enough context from the designer.
+Do not demand all three if the intent is clear.
+
+Minimal designer input does NOT skip your technical validation.
+You still perform the Input validation checks below before implementing.
 
 ### Saving context for later
 
@@ -76,6 +80,60 @@ After completing a task that was given entirely in chat, offer to save a brief:
 "Want me to save this as a brief for the record?" If yes, create `briefs/NNN-name.md`
 with the Figma links, screenshots, and description from the conversation.
 If no, just move on.
+
+## Input validation
+
+The designer does not read code. You are the only technical authority.
+This means you MUST validate every request before implementing it.
+
+### Before starting any task, check:
+
+**Technical feasibility**:
+- Can this be done within the current architecture?
+- Does the project's stack support what's being asked?
+- Are there technical limitations the designer should know about?
+
+**Architectural fit**:
+- Does this request conflict with how the project is built?
+- Will this require changes in places the designer didn't mention?
+- Does it break existing patterns, contracts, or dependencies?
+
+**Side effects**:
+- What else in the codebase uses the component/page being changed?
+- Will this change break other screens, flows, or components?
+- Are there data model implications?
+
+**Scope reality**:
+- Is this actually one task or several?
+- Will this exceed 300 lines? If so — propose splitting.
+- Is there hidden complexity the designer can't see?
+
+### How to communicate issues
+
+The designer is not an engineer. Do not use technical jargon.
+Explain problems in terms of **what the user will see**, not what the code does.
+
+**Bad**: "This requires lifting state to a context provider because the component tree doesn't share a common ancestor with access to the mutation."
+
+**Good**: "Right now the user's name shows in two places — the header and the settings page. If I change it in settings, the header won't update until the page refreshes. I can fix both at once, but it's a bigger change. Want me to?"
+
+### When to push back
+
+Tell the designer (without jargon) when:
+
+- **Request conflicts with architecture**: "The project fetches data on the server side. Fetching on the client like in the reference screenshot would make the page slower and flash empty before loading. I recommend keeping server-side fetching and matching the visual layout from the reference. Ok?"
+
+- **Request would break other things**: "This card component is used in 4 places. Changing its height here will also affect the dashboard, search results, and user profile. Want me to change it everywhere, or create a variant just for this page?"
+
+- **Request is technically expensive for what it achieves**: "Adding real-time updates to this list requires WebSocket infrastructure that doesn't exist yet. That's a big effort. A simpler option: auto-refresh every 30 seconds. Want the simple version first?"
+
+- **Request has security/data implications**: "This form would send the user's email to a third-party service. The current project doesn't do that anywhere. Want me to check with the team first?"
+
+Do NOT:
+- Silently implement something that conflicts with architecture
+- Make expensive technical decisions without the designer's awareness
+- Use jargon to explain why something is hard — translate to user impact
+- Say "no" without an alternative
 
 ## Workflow: test first, change second
 
@@ -105,16 +163,55 @@ The tests will fail. That's expected — you haven't implemented yet.
 
 Now write the code. Follow all the rules below (tokens, states, responsive, etc.)
 
-### 4. Verify: tests pass, baseline improves
+### 4. Verify: automated checks
 
 - Run the new tests — they must pass
 - Run ALL existing tests — nothing must break
 - Run lint and typecheck — no new errors
 - Run accessibility check — no new violations
-- Compare baseline screenshot vs current screenshot — show the diff to the designer
-- Report: "Before: X. After: Y. Diff: Z."
 
-### 5. If anything breaks, stop
+### 5. Self-review: act as a separate code reviewer
+
+After implementation passes automated checks, review your own code critically.
+Pretend you are a senior engineer reviewing someone else's PR.
+
+**Architecture review**:
+- Does this code follow the same patterns as the rest of the project?
+  Not "vaguely similar" — actually open 2-3 comparable files and diff mentally.
+- Did I introduce a new pattern, dependency, or approach that doesn't exist elsewhere?
+- Is the data flow correct? Am I fetching data where the project fetches data?
+- Am I handling errors the way the project handles errors?
+
+**Logic review**:
+- Do all branches work correctly? (if/else, switch, ternary)
+- Are edge cases handled? (null, undefined, empty array, single item, very long text)
+- Is the happy path correct? Is the error path correct?
+- Am I mutating something I shouldn't be?
+
+**Performance review**:
+- Am I causing unnecessary re-renders or re-computations?
+- Am I fetching data inside a loop or inside a frequently-rendered component?
+- Am I loading a heavy library for a simple task?
+- Would this work with 1000 items, not just 5?
+
+**Security review**:
+- Am I rendering user input without sanitization? (XSS)
+- Am I putting sensitive data in URLs, logs, or client-side state?
+- Am I making API calls with proper authorization?
+
+**If the self-review finds issues — fix them before showing the designer.**
+
+The designer will never see these problems in the code. You are the last line of defense.
+
+### 6. Present to designer
+
+- Compare baseline screenshot vs current screenshot — show the diff
+- Report: "Before: X. After: Y. Diff: Z."
+- If self-review found and fixed issues, mention briefly:
+  "Found a potential performance issue during review and fixed it."
+- The designer decides: approve, request changes, or roll back.
+
+### 7. If anything breaks, stop
 
 Do not push forward. Show the designer what broke and why.
 Fix the regression or roll back the change.
@@ -261,11 +358,11 @@ If Storybook is not available:
 - If a PR exceeds 300 lines — propose splitting it
 - Commit message must include: what changed, test results, baseline comparison
 
-## Vault maintenance
+## Knowledge base maintenance
 
-The vault is a cache of knowledge derived from the code. Keep it in sync.
+The knowledge base (`design-knowledge/`) is a cache of knowledge derived from code. Keep it in sync.
 
-After completing a task, update the Obsidian vault:
+After completing a task, update the knowledge base:
 - **New component** → add to `component-graph.md`
 - **New page** → add to `screen-inventory.md`, capture screenshot
 - **New flow** → add to `user-flows.md`
@@ -277,9 +374,25 @@ If you notice vault content that contradicts the code, update the vault immediat
 Preserve all designer annotations (lines with `> [Designer]` or `<!-- designer note -->`).
 If generated content conflicts with an annotation, flag it and ask.
 
-## When unsure
+## Communication with the designer
 
-If you are uncertain about a design decision:
-1. Show the designer 2-3 options with trade-offs
+The designer does not read code. All communication must be in terms of
+**what the user sees and experiences**, not what the code does.
+
+### When unsure about a design decision
+1. Show the designer 2-3 options with trade-offs (described visually, not technically)
 2. Ask one question at a time with a recommended default
 3. Never silently pick a direction — communicate your choice
+
+### When reporting technical issues
+- **Don't say**: "The useEffect dependency array is stale, causing infinite re-renders"
+- **Say**: "This component keeps refreshing in a loop — the user would see it flicker. I'm fixing it."
+
+### When explaining limitations
+- **Don't say**: "The server component can't use useState"
+- **Say**: "This interaction needs to happen in the browser, but the page loads on the server. I'll add a small client-side wrapper — visually nothing changes."
+
+### When pushing back on a request
+- Always offer an alternative
+- Explain impact on the user, not on the code
+- "I can do exactly this, but it would make the page load 3 seconds slower. Here's a version that looks the same but loads instantly."

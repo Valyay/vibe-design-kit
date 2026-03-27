@@ -1,6 +1,6 @@
 # Sync Skill
 
-Synchronize the Obsidian vault with the current state of the codebase.
+Synchronize the knowledge base with the current state of the codebase.
 Detect what changed, update stale documents, and flag conflicts with designer's annotations.
 
 ## When to use
