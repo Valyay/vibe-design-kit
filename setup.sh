@@ -162,58 +162,64 @@ echo ""
 #   keep     → skip if destination exists, copy if not
 #   merge    → append/merge source into destination (caller handles merge logic)
 #   overwrite → backup destination, copy source
+# Result of last apply_config call: "created" | "kept" | "merge" | "overwritten"
+APPLY_RESULT=""
+
 apply_config() {
   local src="$1"
   local dest="$2"
   local desc="$3"
 
   if [[ ! -f "$dest" ]]; then
-    # No existing file → always install
+    # No existing file → always install fresh copy
     mkdir -p "$(dirname "$dest")"
     cp "$src" "$dest"
     echo "  ✓  Created: $desc"
-    return 0  # installed
+    APPLY_RESULT="created"
+    return 0
   fi
 
   case "$STRATEGY" in
     fresh)
       cp "$src" "$dest"
       echo "  ✓  Created: $desc"
-      return 0
+      APPLY_RESULT="created"
       ;;
     keep)
       echo "  ⏭  Kept existing: $desc"
-      return 1  # skipped
+      APPLY_RESULT="kept"
       ;;
     merge)
-      echo "  ⊕  Merging: $desc"
-      return 0  # caller handles merge
+      echo "  ⊕  Will merge: $desc"
+      APPLY_RESULT="merge"
+      # Caller handles the actual merge logic
       ;;
     overwrite)
       cp "$dest" "${dest}.backup.$(date +%s)"
       cp "$src" "$dest"
       echo "  ✓  Overwritten (backup saved): $desc"
-      return 0
+      APPLY_RESULT="overwritten"
       ;;
   esac
+  return 0
 }
 
 # ── Step 1: Copy CLAUDE.md rules ────────────────────────
 
 echo "▸ Step 1/$TOTAL_STEPS: Setting up CLAUDE.md rules..."
 
-# Root CLAUDE.md — merge appends vdk section, keep skips, overwrite replaces
-if apply_config "$TEMPLATES_DIR/CLAUDE.md" "$TARGET_REPO/CLAUDE.md" "CLAUDE.md (root)"; then
-  if [[ "$STRATEGY" == "merge" ]] && [[ -f "$TARGET_REPO/CLAUDE.md" ]]; then
-    # Append vdk rules to existing CLAUDE.md if not already present
-    if ! grep -q "vibe-design-kit" "$TARGET_REPO/CLAUDE.md" 2>/dev/null; then
-      echo "" >> "$TARGET_REPO/CLAUDE.md"
-      echo "<!-- vibe-design-kit rules below -->" >> "$TARGET_REPO/CLAUDE.md"
-      cat "$TEMPLATES_DIR/CLAUDE.md" >> "$TARGET_REPO/CLAUDE.md"
-      echo "  ✓  Appended vibe-design-kit rules to existing CLAUDE.md"
-    else
-      echo "  ⏭  vibe-design-kit rules already present in CLAUDE.md"
-    fi
+# Root CLAUDE.md
+apply_config "$TEMPLATES_DIR/CLAUDE.md" "$TARGET_REPO/CLAUDE.md" "CLAUDE.md (root)"
+
+if [[ "$APPLY_RESULT" == "merge" ]]; then
+  # Append vdk rules to existing CLAUDE.md if not already present
+  if ! grep -q "vibe-design-kit" "$TARGET_REPO/CLAUDE.md" 2>/dev/null; then
+    echo "" >> "$TARGET_REPO/CLAUDE.md"
+    echo "<!-- vibe-design-kit rules below -->" >> "$TARGET_REPO/CLAUDE.md"
+    cat "$TEMPLATES_DIR/CLAUDE.md" >> "$TARGET_REPO/CLAUDE.md"
+    echo "  ✓  Appended vibe-design-kit rules to existing CLAUDE.md"
+  else
+    echo "  ⏭  vibe-design-kit rules already present in CLAUDE.md"
   fi
 fi
 
@@ -224,6 +230,15 @@ for template in "$TEMPLATES_DIR"/*--CLAUDE.md; do
   folder_path="${basename%%--CLAUDE.md}"
   dest="$TARGET_REPO/$folder_path/CLAUDE.md"
   apply_config "$template" "$dest" "$folder_path/CLAUDE.md"
+
+  if [[ "$APPLY_RESULT" == "merge" ]]; then
+    if ! grep -q "vibe-design-kit" "$dest" 2>/dev/null; then
+      echo "" >> "$dest"
+      echo "<!-- vibe-design-kit rules below -->" >> "$dest"
+      cat "$template" >> "$dest"
+      echo "  ✓  Appended to $folder_path/CLAUDE.md"
+    fi
+  fi
 done
 
 echo ""
@@ -232,6 +247,10 @@ echo ""
 
 echo "▸ Step 2/$TOTAL_STEPS: Setting up DESIGN.md..."
 apply_config "$TEMPLATES_DIR/DESIGN.md" "$TARGET_REPO/DESIGN.md" "DESIGN.md"
+
+if [[ "$APPLY_RESULT" == "merge" ]]; then
+  echo "  ℹ  DESIGN.md: review and fill in your tokens alongside existing content"
+fi
 echo ""
 
 # ── Step 3: Quality infrastructure ──────────────────────
@@ -639,7 +658,7 @@ else
   mkdir -p "$KB_DIR/screenshots" "$KB_DIR/screenshots/components"
   cp -r "$KB_TEMPLATE_DIR"/_project-template/* "$KB_DIR/"
   cp "$KB_TEMPLATE_DIR/CLAUDE.md" "$TARGET_REPO/design-knowledge/CLAUDE.md"
-  echo "  ✓  Vault created: $KB_DIR"
+  echo "  ✓  Knowledge base created: $KB_DIR"
 fi
 
 # MCPVault — connect knowledge base to Claude Code (reads .md files directly)
