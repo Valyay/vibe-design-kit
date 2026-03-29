@@ -417,7 +417,7 @@ for skill_dir in "$SKILLS_DIR"/*/; do
   [[ -d "$skill_dir" ]] || continue
   skill_name="$(basename "$skill_dir")"
   dest_skill="$TARGET_REPO/.claude/skills/vdk-$skill_name"
-  if [[ -d "$dest_skill" ]]; then
+  if [[ -f "$dest_skill/SKILL.md" ]]; then
     if [[ "$STRATEGY" == "overwrite" ]]; then
       cp "$skill_dir/SKILL.md" "$dest_skill/SKILL.md"
       echo "    ✓  vdk-$skill_name (overwritten)"
@@ -443,7 +443,7 @@ install_global_skill() {
   local label="$1"
   local name="$2"
   local cmd="$3"
-  if [[ -d "$GLOBAL_SKILLS_DIR/$name" ]]; then
+  if [[ -d "$GLOBAL_SKILLS_DIR/$name" ]] && compgen -G "$GLOBAL_SKILLS_DIR/$name/*.md" > /dev/null 2>&1; then
     echo "    ⏭  $label (already installed globally)"
   else
     echo "    Installing $label..."
@@ -608,12 +608,12 @@ echo "▸ Step 7/$TOTAL_STEPS: Creating knowledge base..."
 
 KB_DIR="$TARGET_REPO/design-knowledge/$PROJECT_NAME"
 
-if [[ -d "$KB_DIR" ]]; then
+if [[ -f "$KB_DIR/entity-map.md" ]]; then
   echo "  ⏭  Knowledge base already exists: $KB_DIR"
 else
   mkdir -p "$KB_DIR/screenshots" "$KB_DIR/screenshots/components"
-  cp -r "$KB_TEMPLATE_DIR"/_project-template/* "$KB_DIR/"
-  cp "$KB_TEMPLATE_DIR/CLAUDE.md" "$TARGET_REPO/design-knowledge/CLAUDE.md"
+  cp -rn "$KB_TEMPLATE_DIR"/_project-template/* "$KB_DIR/"
+  cp -n "$KB_TEMPLATE_DIR/CLAUDE.md" "$TARGET_REPO/design-knowledge/CLAUDE.md" 2>/dev/null || true
   echo "  ✓  Knowledge base created: $KB_DIR"
 fi
 
@@ -633,13 +633,13 @@ echo "▸ Step 8/$TOTAL_STEPS: Creating briefs directory..."
 
 BRIEFS_DEST="$TARGET_REPO/briefs"
 
-if [[ -d "$BRIEFS_DEST" ]]; then
+if [[ -f "$BRIEFS_DEST/_template.md" ]]; then
   echo "  ⏭  Briefs directory already exists: $BRIEFS_DEST"
 else
   mkdir -p "$BRIEFS_DEST/assets" "$BRIEFS_DEST/done" "$BRIEFS_DEST/examples"
-  cp "$TEMPLATES_DIR/briefs/_template.md" "$BRIEFS_DEST/_template.md"
-  cp "$TEMPLATES_DIR/briefs--CLAUDE.md" "$BRIEFS_DEST/CLAUDE.md"
-  cp "$TEMPLATES_DIR/briefs/examples/"*.md "$BRIEFS_DEST/examples/" 2>/dev/null || true
+  cp -n "$TEMPLATES_DIR/briefs/_template.md" "$BRIEFS_DEST/_template.md" 2>/dev/null || true
+  cp -n "$TEMPLATES_DIR/briefs--CLAUDE.md" "$BRIEFS_DEST/CLAUDE.md" 2>/dev/null || true
+  cp -n "$TEMPLATES_DIR/briefs/examples/"*.md "$BRIEFS_DEST/examples/" 2>/dev/null || true
   echo "  ✓  Briefs directory created: $BRIEFS_DEST"
   echo "     See examples/ for how to write briefs"
 fi
@@ -652,11 +652,11 @@ echo "▸ Step 9/$TOTAL_STEPS: Copying prompts..."
 
 PROMPTS_DEST="$TARGET_REPO/prompts"
 
-if [[ -d "$PROMPTS_DEST" ]]; then
+if [[ -f "$PROMPTS_DEST/onboarding.md" ]]; then
   echo "  ⏭  Prompts directory already exists: $PROMPTS_DEST"
 else
   mkdir -p "$PROMPTS_DEST"
-  cp "$PROMPTS_DIR"/*.md "$PROMPTS_DEST/"
+  cp -n "$PROMPTS_DIR"/*.md "$PROMPTS_DEST/" 2>/dev/null || true
   echo "  ✓  Prompts copied to: $PROMPTS_DEST"
 fi
 
