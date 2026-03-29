@@ -51,9 +51,7 @@ if [[ ! "$PROJECT_NAME" =~ ^[a-zA-Z0-9][a-zA-Z0-9._-]*$ ]]; then
 fi
 
 if [[ ! -d "$TARGET_REPO/.git" ]]; then
-  echo "Warning: Target directory is not a git repository: $TARGET_REPO"
-  read -rp "Continue anyway? (y/N) " confirm
-  [[ "$confirm" =~ ^[Yy]$ ]] || exit 0
+  echo "  ⚠  Warning: Target directory is not a git repository."
 fi
 
 # ── Detect package manager ───────────────────────────────
@@ -128,28 +126,7 @@ else
   for item in "${EXISTING[@]}"; do
     echo "    - $item"
   done
-  echo ""
-  echo "  How should I handle existing configs?"
-  echo ""
-  echo "  1) Keep existing — only add where nothing exists"
-  echo "     (safest, won't change any of your current setup)"
-  echo ""
-  echo "  2) Merge — add vibe-design-kit rules alongside existing ones"
-  echo "     (recommended, extends your setup without breaking it)"
-  echo ""
-  echo "  3) Overwrite — replace existing configs with vibe-design-kit"
-  echo "     (clean start, but your current rules will be backed up)"
-  echo ""
-  read -rp "  Choose [1/2/3] (default: 2): " strategy_choice
-  strategy_choice="${strategy_choice:-2}"
-
-  case "$strategy_choice" in
-    1) STRATEGY="keep" ;;
-    3) STRATEGY="overwrite" ;;
-    *) STRATEGY="merge" ;;
-  esac
-  echo ""
-  echo "  Strategy: $STRATEGY"
+  STRATEGY="merge"
 fi
 
 echo ""
@@ -405,55 +382,8 @@ else
 
   if [[ ${#MISSING_QUALITY[@]} -gt 0 ]]; then
     echo ""
-    echo "  Missing: ${MISSING_QUALITY[*]}"
-    read -rp "  Install missing tools? (y/N) " install_quality
-
-    if [[ "$install_quality" =~ ^[Yy]$ ]]; then
-      _saved_dir="$PWD"
-      cd "$TARGET_REPO"
-
-      for tool in "${MISSING_QUALITY[@]}"; do
-        case "$tool" in
-          linter)
-            echo "  Installing Biome (fast linter + formatter)..."
-            pkg_add "--save-dev" "@biomejs/biome" \
-              && { LINTER_FOUND="Biome"; FORMATTER_FOUND="Biome"; echo "  ✓  Biome installed"; } \
-              || echo "  ⚠  Biome install failed"
-            ;;
-          formatter)
-            # Skip if Biome was just installed (it covers formatting)
-            if [[ "$LINTER_FOUND" == "Biome" ]]; then
-              echo "  ⏭  Biome covers formatting"
-            else
-              echo "  Installing Prettier..."
-              pkg_add "--save-dev" "prettier" && echo "  ✓  Prettier installed" || echo "  ⚠  Prettier install failed"
-            fi
-            ;;
-          typescript)
-            echo "  Installing TypeScript..."
-            pkg_add "--save-dev" "typescript" && echo "  ✓  TypeScript installed" || echo "  ⚠  TypeScript install failed"
-            ;;
-          test-runner)
-            echo "  Installing Vitest..."
-            pkg_add "--save-dev" "vitest" && echo "  ✓  Vitest installed" || echo "  ⚠  Vitest install failed"
-            ;;
-          e2e)
-            echo "  Installing Playwright..."
-            pkg_add "--save-dev" "@playwright/test" && npx playwright install --with-deps chromium 2>/dev/null \
-              && echo "  ✓  Playwright installed" || echo "  ⚠  Playwright install failed"
-            ;;
-          hooks)
-            echo "  Installing Husky + lint-staged..."
-            pkg_add "--save-dev" "husky" "lint-staged" && npx husky init 2>/dev/null \
-              && echo "  ✓  Husky installed" || echo "  ⚠  Husky install failed"
-            ;;
-        esac
-      done
-
-      cd "$_saved_dir"
-    else
-      echo "  Skipped. You can install them later."
-    fi
+    echo "  Not found: ${MISSING_QUALITY[*]}"
+    echo "  (You can add them later if the project needs them)"
   fi
 fi
 
@@ -467,22 +397,7 @@ if has_dependency "storybook" || has_dependency "@storybook/react" || [[ -d "$TA
   echo "  ✓  Storybook detected"
   echo "  Onboarding will use Storybook for component screenshots"
 else
-  echo "  ✗  Storybook not found"
-  echo ""
-  echo "  Storybook gives designers a visual component catalog —"
-  echo "  every component with its variants, states, and props."
-  echo "  Without it, the onboarding can only screenshot full pages."
-  echo ""
-  read -rp "  Install Storybook? (y/N) " install_sb
-
-  if [[ "$install_sb" =~ ^[Yy]$ ]]; then
-    echo "  Installing Storybook (this may take a minute)..."
-    (cd "$TARGET_REPO" && npx storybook@latest init --yes 2>/dev/null) \
-      && echo "  ✓  Storybook installed" \
-      || echo "  ⚠  Storybook auto-install failed. Run manually: cd $TARGET_REPO && npx storybook@latest init"
-  else
-    echo "  Skipped. You can install it later with: npx storybook@latest init"
-  fi
+  echo "  ✗  Storybook not found — onboarding will screenshot full pages instead"
 fi
 
 echo ""
@@ -502,115 +417,83 @@ for skill_dir in "$SKILLS_DIR"/*/; do
   dest_skill="$TARGET_REPO/.claude/skills/vdk-$skill_name"
   if [[ -d "$dest_skill" ]]; then
     if [[ "$STRATEGY" == "overwrite" ]]; then
-      cp "$skill_dir"SKILL.md "$dest_skill/SKILL.md"
+      cp "$skill_dir/SKILL.md" "$dest_skill/SKILL.md"
       echo "    ✓  vdk-$skill_name (overwritten)"
     else
       echo "    ⏭  vdk-$skill_name (already exists)"
     fi
   else
     mkdir -p "$dest_skill"
-    cp "$skill_dir"SKILL.md "$dest_skill/SKILL.md"
+    cp "$skill_dir/SKILL.md" "$dest_skill/SKILL.md"
     echo "    ✓  vdk-$skill_name"
   fi
 done
 
-# ── External skills and plugins ──────────────────────────
+# ── Global skills (installed once, available in all projects) ─
+# These are design/quality skills that apply universally.
+# We check ~/.claude/skills — if already there, skip.
 echo ""
-echo "  External skills and plugins:"
+echo "  Global skills (installed once for all projects):"
 
-# In "keep" strategy, skip installing external plugins if project already has .claude/
-if [[ "$STRATEGY" == "keep" ]] && [[ -f "$TARGET_REPO/.claude/settings.json" ]]; then
-  echo "    ⏭  Strategy is 'keep' — not installing external plugins."
-  echo "    See recommended-tools.md for tools you can install manually."
-elif command -v claude &> /dev/null; then
-  # superpowers — TDD, planning, code review, debugging
-  echo "    Installing superpowers (TDD, planning, code review)..."
-  (cd "$TARGET_REPO" && claude plugin add obra/superpowers 2>/dev/null) \
-    && echo "    ✓  superpowers" \
-    || echo "    ⚠  superpowers: claude plugin add obra/superpowers"
+GLOBAL_SKILLS_DIR="$HOME/.claude/skills"
 
-  # code-review-graph — knowledge graph for duplicate detection
-  echo "    Installing code-review-graph..."
-  (cd "$TARGET_REPO" && claude plugin add tirth8205/code-review-graph 2>/dev/null) \
-    && echo "    ✓  code-review-graph" \
-    || echo "    ⚠  code-review-graph: claude plugin add tirth8205/code-review-graph"
+install_global_skill() {
+  local label="$1"
+  local name="$2"
+  local cmd="$3"
+  if [[ -d "$GLOBAL_SKILLS_DIR/$name" ]]; then
+    echo "    ⏭  $label (already installed globally)"
+  else
+    echo "    Installing $label..."
+    eval "$cmd" 2>/dev/null \
+      && echo "    ✓  $label" \
+      || echo "    ⚠  $label: $cmd"
+  fi
+}
 
-  # tdd-guard — enforce test-first
-  echo "    Installing tdd-guard..."
-  (cd "$TARGET_REPO" && claude plugin add nizos/tdd-guard 2>/dev/null) \
-    && echo "    ✓  tdd-guard" \
-    || echo "    ⚠  tdd-guard: claude plugin add nizos/tdd-guard"
+install_global_skill \
+  "impeccable (critique, typeset, colorize, polish)" \
+  "impeccable" \
+  "npx skills add pbakaus/impeccable -y -g -a claude-code"
 
-else
-  echo "    ⚠  Claude CLI not found. Install manually after installing Claude Code."
-  echo "    See recommended-tools.md for the full list."
-fi
+install_global_skill \
+  "web-design-guidelines (100+ UI quality rules)" \
+  "web-design-guidelines" \
+  "npx skills add vercel-labs/agent-skills --skill web-design-guidelines -a claude-code -y -g"
 
-# ── Design quality skills ─────────────────────────────────
+install_global_skill \
+  "frontend-design (anti-AI-slop, distinctive visuals)" \
+  "frontend-design" \
+  "npx skills add anthropics/skills --skill frontend-design -a claude-code -y -g"
+
+install_global_skill \
+  "playwright-skill (70+ E2E testing guides)" \
+  "playwright-skill" \
+  "npx skills add testdino-hq/playwright-skill -y -g -a claude-code"
+
+# ── Project-specific skills (framework-dependent) ────────────
 echo ""
-echo "  Design quality skills:"
-
-if [[ "$STRATEGY" == "keep" ]] && [[ -d "$TARGET_REPO/.claude/skills" ]]; then
-  echo "    ⏭  Strategy is 'keep' — skipping skill installs."
-else
-
-echo "    Installing impeccable (typography, color, spatial design, motion)..."
-(cd "$TARGET_REPO" && npx skills add pbakaus/impeccable 2>/dev/null) \
-  && echo "    ✓  impeccable" \
-  || echo "    ⚠  impeccable: npx skills add pbakaus/impeccable"
-
-echo "    Installing web-design-guidelines (100+ UI quality rules)..."
-(cd "$TARGET_REPO" && npx skills add vercel-labs/agent-skills --skill web-design-guidelines -a claude-code 2>/dev/null) \
-  && echo "    ✓  web-design-guidelines" \
-  || echo "    ⚠  web-design-guidelines: npx skills add vercel-labs/agent-skills --skill web-design-guidelines -a claude-code"
-
-echo "    Installing frontend-design (anti-AI-slop, distinctive visuals)..."
-(cd "$TARGET_REPO" && npx skills add anthropics/skills --skill frontend-design -a claude-code 2>/dev/null) \
-  && echo "    ✓  frontend-design" \
-  || echo "    ⚠  frontend-design: npx skills add anthropics/skills --skill frontend-design -a claude-code"
-
-# ── Testing skills ───────────────────────────────────────
-echo ""
-echo "  Testing skills:"
-
-echo "    Installing playwright-skill (70+ E2E testing guides)..."
-(cd "$TARGET_REPO" && npx skills add testdino-hq/playwright-skill 2>/dev/null) \
-  && echo "    ✓  playwright-skill" \
-  || echo "    ⚠  playwright-skill: npx skills add testdino-hq/playwright-skill"
-
-# Vitest skill — only if the project uses vitest and Claude CLI is available
-if has_dependency "vitest" && command -v claude &> /dev/null; then
-  echo "    Installing vitest-skill..."
-  (cd "$TARGET_REPO" && claude plugin add jezweb/claude-skills 2>/dev/null) \
-    && echo "    ✓  vitest-skill" \
-    || echo "    ⚠  vitest-skill: claude plugin add jezweb/claude-skills"
-fi
-
-# ── Framework-specific skills ────────────────────────────
-echo ""
-echo "  Framework-specific skills:"
+echo "  Project skills (specific to this project):"
 
 # React-specific
 if has_dependency "react" || has_dependency "next"; then
-  echo "    Installing react-best-practices..."
-  (cd "$TARGET_REPO" && npx skills add vercel-labs/agent-skills --skill react-best-practices -a claude-code 2>/dev/null) \
-    && echo "    ✓  react-best-practices" \
-    || echo "    ⚠  react-best-practices: npx skills add vercel-labs/agent-skills --skill react-best-practices -a claude-code"
+  install_global_skill \
+    "vercel-react-best-practices" \
+    "vercel-react-best-practices" \
+    "npx skills add vercel-labs/agent-skills --skill vercel-react-best-practices -a claude-code -y -g"
 else
-  echo "    ⏭  No React/Next.js detected, skipping react-best-practices"
+  echo "    ⏭  No React/Next.js detected, skipping react best practices"
 fi
 
-# shadcn/ui
+# shadcn/ui — project-local because it reads the project's components.json
 if [[ -f "$TARGET_REPO/components.json" ]] || grep -q "shadcn" "$TARGET_REPO/package.json" 2>/dev/null; then
   echo "    Installing shadcn/ui skill..."
   (cd "$TARGET_REPO" && npx shadcn@latest add skill 2>/dev/null) \
     && echo "    ✓  shadcn/ui skill" \
     || echo "    ⚠  shadcn/ui: npx shadcn@latest add skill"
 else
-  echo "    ⏭  No shadcn/ui detected, skipping"
+  echo "    ⏭  No shadcn/ui detected"
 fi
-
-fi  # end strategy=keep guard for skills
 
 # ── MCP servers ──────────────────────────────────────────
 echo ""
@@ -664,7 +547,7 @@ fi
 # MCPVault — connect knowledge base to Claude Code (reads .md files directly)
 if command -v claude &> /dev/null; then
   echo "  Connecting vault to Claude Code via MCPVault..."
-  (claude mcp add obsidian -- npx @bitbonsai/mcpvault@latest "$KB_DIR" 2>/dev/null) \
+  (cd "$TARGET_REPO" && claude mcp add obsidian -- npx @bitbonsai/mcpvault@latest "$KB_DIR" 2>/dev/null) \
     && echo "  ✓  MCPVault connected: AI can read/write/search the vault" \
     || echo "  ⚠  MCPVault: claude mcp add obsidian -- npx @bitbonsai/mcpvault@latest \"$KB_DIR\""
 fi

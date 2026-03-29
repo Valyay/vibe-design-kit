@@ -19,6 +19,22 @@ they happen as part of every change.
 - `app/CLAUDE.md` — auto: route check, all states, screenshot, vault update
 - `briefs/CLAUDE.md` — auto: read brief, cross-reference vault, capture baseline
 
+## Skills: when to use which
+
+These skills are available globally. Use them automatically in the right context —
+the designer doesn't need to ask for them.
+
+| When | Use |
+|------|-----|
+| Implementing any UI component | Apply `web-design-guidelines` principles |
+| Reviewing visual output before showing designer | Apply `frontend-design` principles (no AI slop) |
+| Typography, color, spacing decisions | Apply `impeccable` principles (`typeset`, `colorize`, `arrange`) |
+| Writing E2E or component tests | Follow `playwright-skill` patterns |
+| Designer asks to critique a design | Use `/critique` from impeccable |
+| Designer asks to improve copy/labels | Use `/clarify` from impeccable |
+
+You do not need explicit invocation. Read the skill file and apply its principles inline.
+
 These auto-triggers replace manual prompts. The designer says "build X" —
 you automatically follow the Input validation checks and the 7-step workflow defined below.
 No need for the designer to ask for quality checks, tests, or reviews.
