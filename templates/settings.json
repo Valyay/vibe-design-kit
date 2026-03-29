@@ -1,0 +1,96 @@
+{
+  "permissions": {
+    "allow": [
+      "Read",
+      "Glob",
+      "Grep",
+      "Bash(git status*)",
+      "Bash(git diff*)",
+      "Bash(git log*)",
+      "Bash(git branch*)",
+      "Bash(npm run *)",
+      "Bash(npm test*)",
+      "Bash(pnpm run *)",
+      "Bash(pnpm test*)",
+      "Bash(yarn run *)",
+      "Bash(yarn test*)",
+      "Bash(bun run *)",
+      "Bash(bun test*)",
+      "Bash(npx playwright*)",
+      "Bash(npx vitest*)",
+      "Bash(npx storybook*)",
+      "Bash(npx biome*)",
+      "Bash(npx tsc*)",
+      "Bash(npx skills*)",
+      "Bash(npx eslint*)",
+      "Bash(npx prettier*)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/check-hardcoded-values.sh",
+            "timeout": 10,
+            "statusMessage": "Checking for hardcoded values..."
+          }
+        ]
+      },
+      {
+        "matcher": "Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/check-duplicate-component.sh",
+            "timeout": 10,
+            "statusMessage": "Checking for duplicate components..."
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/protect-vault-baseline.sh",
+            "timeout": 5,
+            "statusMessage": "Checking vault protection..."
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/post-edit-quality.sh",
+            "timeout": 120,
+            "async": true,
+            "statusMessage": "Running quality checks..."
+          }
+        ]
+      },
+      {
+        "matcher": "Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/check-story-exists.sh",
+            "timeout": 10,
+            "statusMessage": "Checking Storybook coverage..."
+          }
+        ]
+      }
+    ]
+  },
+  "plugins": [
+    "obra/superpowers",
+    "tirth8205/code-review-graph",
+    "nizos/tdd-guard"
+  ]
+}

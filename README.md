@@ -29,6 +29,7 @@ The script will:
 - Copy `CLAUDE.md` rules (root + folder-level) into the client repo
 - Create a `DESIGN.md` template for visual identity
 - Install Claude Code skills, plugins, and MCP servers
+- Install enforcement hooks that block rule violations automatically
 - Detect and bootstrap missing quality tools (linter, tests, Storybook)
 - Create a knowledge base from template for persistent project memory
 - Copy ready-made prompts and brief examples
@@ -44,6 +45,7 @@ vibe-design-kit/
 ├── templates/
 │   ├── CLAUDE.md                    # Root AI rules (auto-triggers, quality gates)
 │   ├── DESIGN.md                    # Visual identity template
+│   ├── settings.json                # .claude/settings.json with hooks + permissions
 │   ├── components--CLAUDE.md        # → components/CLAUDE.md
 │   ├── e2e--CLAUDE.md               # → e2e/CLAUDE.md
 │   ├── app--CLAUDE.md               # → app/CLAUDE.md
@@ -51,6 +53,13 @@ vibe-design-kit/
 │   └── briefs/
 │       ├── _template.md             # Design brief template
 │       └── examples/                # 5 example briefs
+│
+├── hooks/                           # Enforcement hooks (→ .claude/hooks/)
+│   ├── check-hardcoded-values.sh    # Block hardcoded colors, px, font-family
+│   ├── check-duplicate-component.sh # Warn about similar existing components
+│   ├── protect-vault-baseline.sh    # Block direct edits to baseline/sync-log
+│   ├── post-edit-quality.sh         # Run lint + typecheck after edits
+│   └── check-story-exists.sh        # Remind to create Storybook stories
 │
 ├── skills/
 │   ├── onboarding/SKILL.md          # Full project analysis for designer
@@ -81,6 +90,22 @@ vibe-design-kit/
 │
 └── .claude/settings.json            # Pre-configured permissions and plugins
 ```
+
+## Enforcement hooks
+
+Rules in `CLAUDE.md` are instructions — the AI *should* follow them. Hooks are enforcement —
+the AI *cannot bypass* them. The kit installs shell scripts into `.claude/hooks/` that run
+automatically on every file edit:
+
+| Hook | Event | Action |
+|------|-------|--------|
+| `check-hardcoded-values.sh` | Before Edit/Write | **Blocks** hardcoded hex colors, pixel values, and font-family in UI files |
+| `check-duplicate-component.sh` | Before Write | **Warns** if a similarly-named component already exists |
+| `protect-vault-baseline.sh` | Before Edit/Write | **Warns** when editing baseline and sync-log files directly |
+| `post-edit-quality.sh` | After Edit/Write | Runs lint + typecheck automatically after code changes |
+| `check-story-exists.sh` | After Write | **Reminds** to create a Storybook story for new components |
+
+Hooks require `jq` to be installed (used for parsing tool input).
 
 ## Key principles
 

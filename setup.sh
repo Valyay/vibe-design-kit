@@ -12,18 +12,20 @@ set -euo pipefail
 #   3. Detects and bootstraps quality infrastructure
 #   4. Detects or installs Storybook
 #   5. Installs Claude Code skills and plugins
-#   6. Creates knowledge base from template
-#   7. Creates briefs/ directory
-#   8. Copies ready-made prompts
-#   9. Captures baseline (screenshots, test results)
+#   6. Installs enforcement hooks
+#   7. Creates knowledge base from template
+#   8. Creates briefs/ directory
+#   9. Copies ready-made prompts
+#  10. Captures baseline (screenshots, test results)
 # ─────────────────────────────────────────────────────────
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TEMPLATES_DIR="$SCRIPT_DIR/templates"
 SKILLS_DIR="$SCRIPT_DIR/skills"
+HOOKS_DIR="$SCRIPT_DIR/hooks"
 KB_TEMPLATE_DIR="$SCRIPT_DIR/knowledge-base"
 PROMPTS_DIR="$SCRIPT_DIR/prompts"
-TOTAL_STEPS=9
+TOTAL_STEPS=10
 
 # ── Argument parsing ─────────────────────────────────────
 
@@ -529,9 +531,80 @@ fi
 
 echo ""
 
-# ── Step 6: Create knowledge base ────────────────────────
+# ── Step 6: Enforcement hooks ──────────────────────────
 
-echo "▸ Step 6/$TOTAL_STEPS: Creating knowledge base..."
+echo "▸ Step 6/$TOTAL_STEPS: Installing enforcement hooks..."
+
+HOOKS_DEST="$TARGET_REPO/.claude/hooks"
+mkdir -p "$HOOKS_DEST"
+
+# Copy hook scripts
+HOOKS_INSTALLED=0
+for hook_script in "$HOOKS_DIR"/*.sh; do
+  [[ -f "$hook_script" ]] || continue
+  hook_name="$(basename "$hook_script")"
+  cp "$hook_script" "$HOOKS_DEST/$hook_name"
+  chmod +x "$HOOKS_DEST/$hook_name"
+  HOOKS_INSTALLED=$((HOOKS_INSTALLED + 1))
+done
+echo "  ✓  $HOOKS_INSTALLED hook scripts installed to .claude/hooks/"
+
+# Merge hooks config into .claude/settings.json
+SETTINGS_FILE="$TARGET_REPO/.claude/settings.json"
+SETTINGS_TEMPLATE="$TEMPLATES_DIR/settings.json"
+
+if [[ -f "$SETTINGS_FILE" ]]; then
+  # Merge: add hooks and permissions from template to existing settings
+  if command -v jq &> /dev/null; then
+    MERGED=$(jq -s '
+      # Deduplicate hook entries by their command path
+      def dedup_hooks: [foreach .[] as $h ({seen: []};
+        if (.seen | map(.hooks[0].command) | index($h.hooks[0].command)) then .
+        else .seen += [$h] end; .seen)] | last;
+      .[0] as $existing | .[1] as $template |
+      $existing * {
+        hooks: {
+          PreToolUse: (($existing.hooks.PreToolUse // []) + ($template.hooks.PreToolUse // []) | dedup_hooks),
+          PostToolUse: (($existing.hooks.PostToolUse // []) + ($template.hooks.PostToolUse // []) | dedup_hooks)
+        },
+        permissions: {
+          allow: (($existing.permissions.allow // []) + ($template.permissions.allow // []) | unique)
+        },
+        plugins: (($existing.plugins // []) + ($template.plugins // []) | unique)
+      }
+    ' "$SETTINGS_FILE" "$SETTINGS_TEMPLATE" 2>/dev/null) || true
+
+    if [[ -n "$MERGED" ]]; then
+      echo "$MERGED" > "$SETTINGS_FILE"
+      echo "  ✓  Hooks configuration merged into existing .claude/settings.json"
+    else
+      echo "  ⚠  Could not merge settings.json — install hooks config manually"
+      echo "     See templates/settings.json for the hooks configuration"
+    fi
+  else
+    echo "  ⚠  jq not found — cannot merge settings.json automatically"
+    echo "     Install jq or manually copy hooks config from templates/settings.json"
+  fi
+else
+  # No existing settings — copy template directly
+  mkdir -p "$(dirname "$SETTINGS_FILE")"
+  cp "$SETTINGS_TEMPLATE" "$SETTINGS_FILE"
+  echo "  ✓  Created .claude/settings.json with hooks configuration"
+fi
+
+echo ""
+echo "  Hooks enforce these rules automatically:"
+echo "    - Block hardcoded colors, pixel values, font-family in UI files"
+echo "    - Warn about duplicate components before creation"
+echo "    - Warn when editing baseline and sync-log files directly"
+echo "    - Run lint + typecheck after code edits"
+echo "    - Remind to create Storybook stories for new components"
+
+echo ""
+
+# ── Step 7: Create knowledge base ────────────────────────
+
+echo "▸ Step 7/$TOTAL_STEPS: Creating knowledge base..."
 
 KB_DIR="$TARGET_REPO/design-knowledge/$PROJECT_NAME"
 
@@ -554,9 +627,9 @@ fi
 
 echo ""
 
-# ── Step 7: Create briefs directory ──────────────────────
+# ── Step 8: Create briefs directory ──────────────────────
 
-echo "▸ Step 7/$TOTAL_STEPS: Creating briefs directory..."
+echo "▸ Step 8/$TOTAL_STEPS: Creating briefs directory..."
 
 BRIEFS_DEST="$TARGET_REPO/briefs"
 
@@ -573,9 +646,9 @@ fi
 
 echo ""
 
-# ── Step 8: Copy prompts ────────────────────────────────
+# ── Step 9: Copy prompts ────────────────────────────────
 
-echo "▸ Step 8/$TOTAL_STEPS: Copying prompts..."
+echo "▸ Step 9/$TOTAL_STEPS: Copying prompts..."
 
 PROMPTS_DEST="$TARGET_REPO/prompts"
 
@@ -589,9 +662,9 @@ fi
 
 echo ""
 
-# ── Step 9: Capture baseline ────────────────────────────
+# ── Step 10: Capture baseline ───────────────────────────
 
-echo "▸ Step 9/$TOTAL_STEPS: Capturing baseline..."
+echo "▸ Step 10/$TOTAL_STEPS: Capturing baseline..."
 
 BASELINE_DIR="$TARGET_REPO/design-knowledge/$PROJECT_NAME/baseline"
 mkdir -p "$BASELINE_DIR"

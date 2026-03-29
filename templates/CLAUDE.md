@@ -6,6 +6,19 @@ You are working with a **designer, not a developer**. The designer does not revi
 you must be stricter with yourself. Validate your own output. If something looks wrong,
 fix it before presenting.
 
+## Enforcement hooks
+
+This project has Claude Code hooks (`.claude/hooks/`) that **automatically enforce** key rules.
+These are not suggestions — they run as shell scripts and can block your actions:
+
+- **Hardcoded values** — Edit/Write to UI files is blocked if hardcoded hex colors, pixel values, or font-family declarations are detected. Use design tokens instead.
+- **Duplicate components** — Writing a new component file triggers a similarity search. You'll be warned if a similar component already exists.
+- **Vault protection** — Editing `baseline/` files or `_sync-log.md` triggers a warning. These are normally updated by the sync skill.
+- **Quality checks** — Lint and typecheck run automatically after every code edit.
+- **Storybook coverage** — Creating a new component without a story file triggers a reminder.
+
+If a hook blocks you, fix the issue — do not try to bypass it.
+
 ## Automatic behaviors
 
 This project has folder-level CLAUDE.md files that define what happens automatically.
