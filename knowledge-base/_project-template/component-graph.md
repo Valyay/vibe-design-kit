@@ -4,6 +4,61 @@
 > what data they consume, and where they are used.
 > Update when components are added, removed, or restructured.
 
+## Component dependency diagram
+
+<!-- Visual map of component relationships. Renders natively in Obsidian and GitHub. -->
+<!-- Pages are highlighted with fill color. Components are grouped by role via subgraphs. -->
+
+```mermaid
+graph TD
+    subgraph Pages
+        DashboardPage
+        ProjectListPage
+        ProjectDetailPage
+        TaskDetailPage
+    end
+
+    subgraph Layout
+        PageShell --> Sidebar
+        PageShell --> Header
+        Sidebar --> OrgSwitcher
+        Sidebar --> NavLink
+        Header --> Breadcrumbs
+        Header --> UserMenu
+    end
+
+    subgraph Data Display
+        StatsPanel --> StatCard
+        RecentActivity --> ActivityRow
+        ActivityRow --> Avatar
+        ProjectCard --> Avatar
+        TaskRow --> Avatar
+    end
+
+    subgraph Data Input
+        TaskForm
+        SearchInput
+        FilterBar
+    end
+
+    DashboardPage --> PageShell
+    DashboardPage --> StatsPanel
+    DashboardPage --> RecentActivity
+    ProjectListPage --> PageShell
+    ProjectListPage --> ProjectCard
+    ProjectListPage --> SearchInput
+    ProjectDetailPage --> PageShell
+    ProjectDetailPage --> TaskRow
+    ProjectDetailPage --> TaskForm
+    TaskDetailPage --> PageShell
+    TaskDetailPage --> TaskForm
+
+    style DashboardPage fill:#e0f2fe
+    style ProjectListPage fill:#e0f2fe
+    style ProjectDetailPage fill:#e0f2fe
+    style TaskDetailPage fill:#e0f2fe
+```
+
 ## Page-level composition
 
 <!-- Each page as a tree showing real component nesting, data sources, and navigation targets. -->

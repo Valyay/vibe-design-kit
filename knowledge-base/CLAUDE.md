@@ -15,9 +15,25 @@ The designer can view and edit these files with any tool:
 
 The designer reads and edits these files. AI reads, updates, and respects designer's annotations.
 
+## How to navigate the vault
+
+**Always read `_index.md` first.** It is the master index of all vault documents with one-line
+summaries, last updated dates, and a quick lookup table mapping entities to screens, components,
+and flows. Reading `_index.md` tells you which documents are relevant to your task — so you
+read 2-3 files instead of scanning 6+.
+
+If `_index.md` still contains only HTML comment placeholders (not yet populated by onboarding),
+fall back to reading all primary documents directly. Suggest running the onboarding skill.
+
 ## Structure
 
-### Primary documents (read first)
+### Entry point
+
+```
+_index.md               — Master index: read this first, find what you need
+```
+
+### Primary documents
 
 ```
 product-overview.md     — What is this product and who is it for?
@@ -114,15 +130,21 @@ After any knowledge base update, append to `_sync-log.md`:
 
 ## Rules for AI
 
+### Before any task
+1. Read **_index.md** — find which documents are relevant to this task
+2. Read only the relevant documents (not all 6 primary docs)
+
 ### Before creating a new component
-1. Check **component-graph.md** — does a similar component already exist?
-2. Check **entity-map.md** — what entity does this component display?
-3. Check **visual-language.md** — what patterns should it follow?
+1. Read **_index.md** → quick lookup table → find related entities, screens, components
+2. Check **component-graph.md** — does a similar component already exist?
+3. Check **entity-map.md** — what entity does this component display?
+4. Check **visual-language.md** — what patterns should it follow?
 
 ### Before creating a new page
-1. Check **screen-inventory.md** — is there already a page for this?
-2. Check **user-flows.md** — how does this page fit into existing flows?
-3. Check **entity-map.md** — what entities appear on this page?
+1. Read **_index.md** → quick lookup table → find related entities, flows
+2. Check **screen-inventory.md** — is there already a page for this?
+3. Check **user-flows.md** — how does this page fit into existing flows?
+4. Check **entity-map.md** — what entities appear on this page?
 
 ### Before using colors, spacing, or typography
 1. Check **visual-language.md** — what values are actually used?
@@ -132,6 +154,20 @@ After any knowledge base update, append to `_sync-log.md`:
 ### Before making any change
 1. Check **baseline/quality-snapshot.md** — what's the current quality state?
 2. After the change, quality must not get worse (no new lint errors, no new test failures)
+
+### When updating Mermaid diagrams
+
+Primary documents contain Mermaid diagrams that visualize relationships:
+- **entity-map.md** — `graph LR` (overview) + `erDiagram` (detailed with fields and cardinality)
+- **component-graph.md** — `graph TD` (component dependency tree grouped by role)
+- **user-flows.md** — `flowchart LR` (screen map) + `flowchart TD` (per-flow steps)
+
+Rules:
+- Keep diagrams in sync with the text content in the same document
+- When adding an entity, component, or flow — update both the diagram and the text sections
+- Use solid arrows for primary paths, dashed arrows for error/edge case paths
+- If a diagram exceeds ~20 nodes, split into sub-diagrams per domain area
+- Designer annotations near diagrams are sacred — preserve them
 
 ### Never
 - Delete or overwrite designer annotations

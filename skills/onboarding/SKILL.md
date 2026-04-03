@@ -21,6 +21,7 @@ Six interconnected documents, each answering a different designer question:
 6. **visual-language.md** — "What is the current design system, honestly?"
 
 Plus supporting files:
+- **_index.md** — master index of all vault documents (AI reads this first)
 - **token-audit.md** — appendix to visual-language, raw data
 - **architecture.md** — tech stack for when the designer needs it
 - **baseline/quality-snapshot.md** — current quality state (lint, tests, typecheck)
@@ -116,13 +117,30 @@ For each entity:
 - Where it appears in the UI (list, detail, card, form, mention)
 - What actions users perform on it (create, edit, delete, assign, share)
 
-Relationships as a visual graph (ASCII or Mermaid):
+Relationships as Mermaid diagrams (rendered natively in Obsidian and GitHub):
+
+1. **Relationship overview** — `graph LR` for quick orientation:
+```mermaid
+graph LR
+    Organization -->|has many| Project
+    Project -->|has many| Task
+    Task -->|assigned to| User
 ```
-Organization ──has many──→ Project ──has many──→ Task
-     │                        │                    │
-     └── has members: User    └── has settings     └── assigned to: User
-                                                   └── has comments
+
+2. **ER diagram** — `erDiagram` with cardinality and key fields:
+```mermaid
+erDiagram
+    Organization ||--o{ Project : "has many"
+    Project ||--o{ Task : "has many"
+    Task }o--|| User : "assigned to"
+    Organization {
+        string name
+        image logo
+    }
 ```
+
+Include only designer-relevant fields in the ER diagram (not internal IDs or timestamps).
+Use `||--o{` for one-to-many, `}o--||` for many-to-one, `||--||` for one-to-one.
 
 Cross-reference: link each entity to screens and components where it appears.
 
@@ -193,7 +211,25 @@ Scan the codebase for all UI components. For each one, trace:
 
 **Output → `component-graph.md`:**
 
-Organized as a tree showing real composition, not a flat list:
+Start with a Mermaid dependency diagram showing how pages connect to components:
+```mermaid
+graph TD
+    subgraph Pages
+        DashboardPage
+        ProjectListPage
+    end
+    subgraph Components
+        PageShell --> Sidebar
+        PageShell --> Header
+    end
+    DashboardPage --> PageShell
+    DashboardPage --> StatsPanel
+    style DashboardPage fill:#e0f2fe
+```
+Use `subgraph` to group by role (Pages, Layout, Data Display, etc.).
+Color page nodes with `fill:#e0f2fe` for visual distinction.
+
+Then provide detailed composition as a tree showing real nesting, not a flat list:
 
 ```markdown
 ## DashboardPage (/dashboard)
@@ -241,6 +277,21 @@ the actual user journeys:
 4. Identify cross-entity flows (create task from project page)
 
 **Output → `user-flows.md`:**
+
+Start with a flow map — a Mermaid `flowchart LR` showing all screens and navigation paths:
+```mermaid
+flowchart LR
+    Dashboard --> ProjectList
+    Dashboard --> ProjectDetail
+    ProjectDetail --> TaskDetail
+    ProjectDetail --> NewTask
+    NewTask -.->|error| NewTask
+    style Dashboard fill:#e0f2fe
+```
+Use solid arrows for primary paths, dashed arrows for error/edge case paths.
+Color key screens for visual orientation.
+
+Then document each flow with its own Mermaid `flowchart TD` showing steps:
 
 ```markdown
 ## Create a new task
@@ -365,7 +416,32 @@ that visual documentation is missing.
 
 ---
 
-## Step 9: Present to the designer
+## Step 9: Generate the master index
+
+Create `_index.md` — the single entry point for AI and designers to navigate the vault.
+
+**What to include:**
+1. **Primary documents table** — each document with a one-line summary and last updated date
+2. **Supporting reference table** — token-audit, architecture, baseline
+3. **Detail layer table** — any detail documents created (entities, decisions, issues, flows, patterns)
+4. **Quick lookup table** — each entity cross-referenced with its screens, components, and flows
+5. **Designer annotations count** — total across all files, list which files have them
+
+**Summaries must be concrete, not generic:**
+- Bad: "Entity relationships"
+- Good: "5 entities (Organization, Project, Task, User, Comment), Organization → Project → Task hierarchy"
+
+**Why this matters:**
+AI reads `_index.md` first before any pre-task check. A good index means the AI reads 1 file
+instead of scanning 6+ documents to find relevant context. This saves ~70% of tokens on lookups.
+
+**Keep it current:**
+The sync skill updates `_index.md` on every sync. After onboarding, the index reflects
+the initial state. Future syncs update summaries and dates.
+
+---
+
+## Step 10: Present to the designer
 
 Do NOT dump files and say "done." Present a guided walkthrough:
 
@@ -384,7 +460,7 @@ Do NOT dump files and say "done." Present a guided walkthrough:
    - Or: "No lint, no tests, no TypeScript. We're starting from zero on quality."
    - "Storybook: 15 stories covering 8 of 24 components" or "No Storybook installed"
 8. **Tooling gaps**: check what skills and MCP servers are installed vs recommended.
-   Suggest missing ones (see Step 10).
+   Suggest missing ones (see Step 11).
 9. **Recommended first actions**:
    - Quick wins (fix hardcoded colors, add missing empty states)
    - Important but larger (consolidate duplicate components, add responsive layouts)
@@ -396,7 +472,7 @@ Tell the designer where each file is and what question it answers.
 
 ---
 
-## Step 10: Check installed tools and suggest missing ones
+## Step 11: Check installed tools and suggest missing ones
 
 Review what skills, plugins, and MCP servers are available and recommend
 tools the designer might be missing. Reference `recommended-tools.md`.

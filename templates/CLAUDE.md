@@ -391,13 +391,18 @@ If Storybook is not available:
 
 The knowledge base (`design-knowledge/`) is a cache of knowledge derived from code. Keep it in sync.
 
+Before starting a task, read `_index.md` in the knowledge base directory to find relevant documents.
+If `_index.md` has only placeholder comments, fall back to reading all primary documents.
+
 After completing a task, update the knowledge base:
-- **New component** → add to `component-graph.md`
+- **New component** → add to `component-graph.md` (text + Mermaid diagram)
 - **New page** → add to `screen-inventory.md`, capture screenshot
-- **New flow** → add to `user-flows.md`
+- **New flow** → add to `user-flows.md` (text + Mermaid diagram)
+- **New entity** → add to `entity-map.md` (text + both Mermaid diagrams)
 - **Decision made** → create ADR in `decisions/`
 - **Issue found** → document in `issues/`
 - **Pattern established** → document in `patterns/`
+- **Any vault change** → update the summary in `_index.md`
 
 If you notice vault content that contradicts the code, update the vault immediately.
 Preserve all designer annotations (lines with `> [Designer]` or `<!-- designer note -->`).

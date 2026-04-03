@@ -564,8 +564,8 @@ if [[ -f "$SETTINGS_FILE" ]]; then
       .[0] as $existing | .[1] as $template |
       $existing * {
         hooks: {
-          PreToolUse: (($existing.hooks.PreToolUse // []) + ($template.hooks.PreToolUse // []) | dedup_hooks),
-          PostToolUse: (($existing.hooks.PostToolUse // []) + ($template.hooks.PostToolUse // []) | dedup_hooks)
+          PreToolUse: (($existing.hooks.PreToolUse // []) + ($template.hooks.PreToolUse // []) | dedup_hooks // []),
+          PostToolUse: (($existing.hooks.PostToolUse // []) + ($template.hooks.PostToolUse // []) | dedup_hooks // [])
         },
         permissions: {
           allow: (($existing.permissions.allow // []) + ($template.permissions.allow // []) | unique)

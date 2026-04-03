@@ -88,7 +88,30 @@ For each stale document:
 4. Add new entries for new items
 5. Mark removed items as `[Removed since YYYY-MM-DD]` instead of deleting
 
-### Step 5: Re-capture screenshots if possible
+### Step 5: Update Mermaid diagrams
+
+Mermaid diagrams in vault documents are generated content — update them when relationships change.
+
+**entity-map.md** — update both diagrams:
+- `graph LR` (relationship overview): add/remove entity nodes and edges
+- `erDiagram` (ER diagram): add/remove entities, update fields and cardinality
+
+**component-graph.md** — update the `graph TD` dependency diagram:
+- Add new components to appropriate subgroups (Pages, Layout, Data Display, etc.)
+- Add edges from pages to their components
+- Remove deleted components
+- Keep page nodes colored with `fill:#e0f2fe`
+
+**user-flows.md** — update both levels:
+- Flow map (`flowchart LR`): add/remove screens and navigation paths
+- Per-flow diagrams (`flowchart TD`): update steps for changed flows, add diagrams for new flows
+
+**Rules**:
+- Only update diagrams when the underlying data changed (don't regenerate unchanged diagrams)
+- Keep diagrams in sync with the text content in the same document
+- If a diagram gets too large (>20 nodes), split into sub-diagrams per domain area
+
+### Step 6: Re-capture screenshots if possible
 
 If the app is running locally or a staging URL is available:
 - Re-screenshot pages that changed
@@ -99,7 +122,21 @@ If the app is not running:
 - Skip screenshots
 - Note which pages need re-capturing
 
-### Step 6: Update sync log
+### Step 7: Update master index
+
+Update `_index.md` to reflect the current state of the vault:
+
+1. **Update summaries** — each document's one-line summary should reflect current content, not stale descriptions
+2. **Update dates** — set "Last updated" to today for documents that were modified in this sync
+3. **Update detail layer table** — add entries for new detail documents, remove entries for deleted ones
+4. **Update quick lookup table** — cross-reference entities with their current screens, components, and flows
+5. **Update annotations count** — recount designer annotations across all files
+6. **Update "Last sync" date** in the header
+
+**Why this matters**: AI reads `_index.md` first. If the index is stale, AI will read wrong documents
+or miss new ones. Keep the index accurate — it's the vault's table of contents.
+
+### Step 8: Update sync log
 
 Write to `_sync-log.md`:
 ```markdown

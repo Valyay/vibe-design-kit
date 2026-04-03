@@ -14,5 +14,7 @@ Sync the knowledge base with the current state of the code.
 3. **Preserve my annotations** — anything I wrote manually in the vault stays.
    If my notes conflict with the code, flag it and let me decide.
 4. Update the generated content to match reality.
-5. Re-capture screenshots for changed pages if the app is running.
-6. Write a sync log and tell me what changed and what needs my attention.
+5. Update Mermaid diagrams in entity-map, component-graph, and user-flows to reflect changes.
+6. Re-capture screenshots for changed pages if the app is running.
+7. Update `_index.md` — refresh summaries, dates, and quick lookup table.
+8. Write a sync log and tell me what changed and what needs my attention.

@@ -49,15 +49,16 @@ fi
 
 # Check for hardcoded pixel values in style contexts (skip 0px, 1px which are common resets)
 # Exclude @media queries and viewport declarations — breakpoints are legitimately hardcoded
-PX_MATCHES=$(echo "$CONTENT" | grep -v '@media\|min-width\|max-width\|viewport' | grep -oE '[^a-zA-Z_-][2-9][0-9]*px|[^a-zA-Z_-][1-9][0-9]+px' | head -5 || true)
+PX_MATCHES=$(echo "$CONTENT" | grep -v '@media\|min-width\|max-width\|viewport\|border.*px\|outline.*px' | grep -oE '[^a-zA-Z_-][2-9][0-9]*px|[^a-zA-Z_-][1-9][0-9]+px' | head -5 || true)
 if [[ -n "$PX_MATCHES" ]]; then
   UNIQUE_PX=$(echo "$PX_MATCHES" | sed 's/^[^0-9]*//' | sort -u | head -5)
   VIOLATIONS="${VIOLATIONS}Hardcoded pixel values found: ${UNIQUE_PX//$'\n'/, }. "
 fi
 
 # Check for hardcoded font-family declarations (outside of token/config files)
+# Covers both CSS (font-family:) and CSS-in-JS (fontFamily:/"fontFamily"=)
 # Allow: var(), inherit, unset, revert, initial — these are correct CSS usage
-FONT_MATCHES=$(echo "$CONTENT" | grep -iE "font-family:" | grep -viE "font-family:\s*(var\(|inherit|unset|revert|initial)" | grep -oiE "font-family:\s*['\"]?[A-Za-z]" || true)
+FONT_MATCHES=$(echo "$CONTENT" | grep -iE "font-family:|fontFamily\s*[:=]" | grep -viE "(font-family|fontFamily)\s*[:=]\s*['\"]?(var\(|inherit|unset|revert|initial)" | head -3 || true)
 if [[ -n "$FONT_MATCHES" ]]; then
   VIOLATIONS="${VIOLATIONS}Hardcoded font-family found. "
 fi

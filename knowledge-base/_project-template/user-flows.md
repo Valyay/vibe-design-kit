@@ -4,6 +4,39 @@
 > Each flow connects screens, entities, and components.
 > Use these as input for E2E test generation.
 
+## Flow map
+
+<!-- Visual overview of how users navigate between screens. Renders natively in Obsidian and GitHub. -->
+<!-- Solid arrows = primary paths. Dashed arrows = error/edge case paths. -->
+
+```mermaid
+flowchart LR
+    Landing([Landing]) --> SignUp([Sign Up])
+    SignUp --> Onboarding([Onboarding])
+    SignUp -.->|validation error| SignUp
+    Onboarding --> Dashboard([Dashboard])
+
+    Dashboard --> ProjectList([Project List])
+    Dashboard --> ProjectDetail([Project Detail])
+    ProjectList --> ProjectDetail
+    ProjectList --> NewProject([New Project])
+    NewProject --> ProjectDetail
+    NewProject -.->|tier limit| UpgradeCTA([Upgrade])
+
+    ProjectDetail --> TaskDetail([Task Detail])
+    ProjectDetail --> NewTask([New Task])
+    NewTask --> TaskDetail
+    NewTask -.->|validation error| NewTask
+
+    Dashboard --> Settings([Settings])
+    Settings --> Members([Members])
+    Members -.->|invite| InviteFlow([Invite Member])
+
+    style Landing fill:#f0fdf4
+    style Dashboard fill:#e0f2fe
+    style Settings fill:#fef3c7
+```
+
 ## Flow overview
 
 <!-- Map of all key flows and which entity they operate on. -->
@@ -21,6 +54,16 @@
 
 **Actor**: Project manager
 **Goal**: Set up a new project for the team
+
+```mermaid
+flowchart TD
+    A[Dashboard] -->|click 'New project'| B[New Project Form]
+    B -->|fill name, members| C{Validate}
+    C -->|valid| D[POST /api/projects]
+    D --> E[Project Detail - empty state]
+    C -.->|invalid| B
+    C -.->|tier limit| F[Upgrade CTA]
+```
 
 **Steps**:
 1. **Dashboard** (`/dashboard`)
@@ -50,6 +93,16 @@
 
 **Actor**: Team member
 **Goal**: Add a task to a project
+
+```mermaid
+flowchart TD
+    A[Project Detail] -->|click 'New task'| B[New Task Modal]
+    B -->|fill title, assignee, deadline| C{Validate}
+    C -->|valid| D[POST /api/projects/id/tasks]
+    D --> E[Task appears in list]
+    D -.-> F[Task Detail]
+    C -.->|invalid| B
+```
 
 **Steps**:
 1. **Project detail** (`/projects/[id]`)

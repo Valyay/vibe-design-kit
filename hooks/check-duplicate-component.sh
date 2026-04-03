@@ -53,7 +53,7 @@ SIMILAR=$(find "$PROJECT_DIR" \
   ! -name "*.test.*" ! -name "*.spec.*" ! -name "*.stories.*" ! -name "*.story.*" \
   ! -path "*/node_modules/*" ! -path "*/.next/*" ! -path "*/dist/*" ! -path "*/.storybook/*" \
   2>/dev/null | \
-  grep -i "$BASE_NAME" | \
+  grep -iF "$BASE_NAME" | \
   grep -v "$FILE_PATH" | \
   head -5 || true)
 
