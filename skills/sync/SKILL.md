@@ -59,6 +59,8 @@ For each primary vault document, compare what it says vs what the code shows now
 - New tokens added?
 - Hardcoded values added or removed?
 - Consistency changes (better or worse)?
+- If token changes are detected, suggest running `vdk-sync-tokens` for a full
+  three-way reconciliation (Figma ↔ DESIGN.md ↔ Code)
 
 ### Step 3: Preserve designer annotations
 

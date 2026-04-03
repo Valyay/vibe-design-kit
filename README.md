@@ -63,7 +63,8 @@ vibe-design-kit/
 │
 ├── skills/
 │   ├── onboarding/SKILL.md          # Full project analysis for designer
-│   └── sync/SKILL.md                # Keep vault in sync with code changes
+│   ├── sync/SKILL.md                # Keep vault in sync with code changes
+│   └── sync-tokens/SKILL.md         # Figma ↔ DESIGN.md ↔ Code token reconciliation
 │
 ├── knowledge-base/                  # Project knowledge (code is source of truth)
 │   ├── CLAUDE.md
@@ -86,7 +87,8 @@ vibe-design-kit/
 │   ├── new-page.md
 │   ├── generate-e2e.md
 │   ├── design-review.md
-│   └── sync-vault.md
+│   ├── sync-vault.md
+│   └── sync-tokens.md
 │
 └── .claude/settings.json            # Pre-configured permissions and plugins
 ```

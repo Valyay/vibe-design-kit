@@ -1,8 +1,26 @@
 # Visual Identity
 
-> Fill in this file with the project's design intent: tokens and visual guidelines.
-> When this file and the code's token system disagree, the code wins — flag the discrepancy.
-> Delete the placeholder comments as you fill in real values.
+> **How to use this file**
+>
+> This is your project's design spec — the **intended** visual language.
+> It can be filled in three ways:
+>
+> 1. **Auto-populated by onboarding** — if you ran the onboarding skill, consistent
+>    values from the code were pre-filled here. Look for `[auto-filled]` markers.
+>    Review and approve them, or change them to what you actually want.
+> 2. **From your Figma file** — if you have a design system in Figma, copy your
+>    token values here. This becomes the reference AI uses when building UI.
+> 3. **From scratch** — fill in the tables below. Replace the `<!-- example -->` 
+>    comments with real values. Delete sections you don't need yet.
+>
+> **When this file and the code disagree**, the code wins day-to-day — but flag
+> the discrepancy. This file captures your *intent*; the code captures *reality*.
+> The goal is to close the gap over time.
+>
+> **Markers you may see:**
+> - `[auto-filled]` — value extracted from code, consistent across the codebase. Review and approve.
+> - `[inconsistent]` — code uses multiple values for this purpose. Pick one and AI will consolidate.
+> - `[missing]` — no value found in code. Fill in or leave blank to skip.
 
 ## Brand
 
@@ -14,7 +32,8 @@
 
 ### Primary palette
 
-<!-- Define your main colors as CSS custom properties or Tailwind values -->
+<!-- Source: CSS variables, Tailwind config, or theme file in the codebase.
+     Onboarding auto-fills these from tokenized values in visual-language.md. -->
 
 | Token | Value | Usage |
 |-------|-------|-------|
@@ -45,6 +64,9 @@
 
 ## Typography
 
+<!-- Source: @font-face declarations, Google Fonts links, Tailwind font config.
+     Onboarding extracts actual font usage from the codebase. -->
+
 | Token | Font | Size | Weight | Line height | Usage |
 |-------|------|------|--------|-------------|-------|
 | `--font-heading` | <!-- Inter --> | — | — | — | Font family for headings |
@@ -57,7 +79,8 @@
 
 ## Spacing
 
-<!-- Use a consistent spacing scale. Example: 4px base unit -->
+<!-- Source: spacing scale in Tailwind config, CSS variables, or theme file.
+     Onboarding detects common gaps used in the codebase. -->
 
 | Token | Value | Usage |
 |-------|-------|-------|
@@ -102,7 +125,8 @@
 
 ## Component guidelines
 
-<!-- Add notes about specific component decisions -->
+<!-- These are design decisions, not code facts. Onboarding does NOT auto-fill this section.
+     Describe how you want components to behave. AI follows these rules when building UI. -->
 
 ### Buttons
 - Primary: filled, used for main action per section
@@ -127,8 +151,8 @@
 
 ## Visual references
 
-<!-- Project-level references that define the overall look and feel.
-     Keep only what you have — delete empty sections. -->
+<!-- These come from YOU, not from code. Paste links, screenshots, or mood descriptions
+     that capture the look and feel you're going for. AI uses these as creative direction. -->
 
 ### Reference websites
 

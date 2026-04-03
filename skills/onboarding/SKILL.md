@@ -368,6 +368,9 @@ Reference the detailed numbers in `token-audit.md`.
 Raw data: all tokens, all hardcoded values, file locations.
 Referenced from visual-language.md for the details.
 
+If the designer has a Figma file with variables, suggest running `vdk-sync-tokens`
+after onboarding to reconcile Figma tokens with what's in the code.
+
 ### architecture.md
 Tech stack, project structure, build tools, testing setup.
 The designer doesn't need this first, but it's there when they ask "why does X work that way?"
@@ -394,6 +397,84 @@ This is the starting line. Every change must not make it worse.
 If quality infrastructure is missing (no lint, no tests), note it clearly:
 "This project has no automated quality checks. Any change should be verified
 manually. Consider asking the team to set up ESLint, TypeScript, and Playwright."
+
+---
+
+## Step 7b: Populate DESIGN.md from code
+
+After generating `visual-language.md` and `token-audit.md`, use them to pre-fill
+the project's `DESIGN.md`. This bridges the gap between "what the code does" and
+"what the designer intends."
+
+### Data sources (in priority order)
+
+1. **Token system** — CSS variables, Tailwind config, theme files (highest confidence)
+2. **visual-language.md** — the audit you just generated
+3. **token-audit.md** — raw data for anything the audit summarized
+
+### What to auto-fill
+
+Fill a value in DESIGN.md when it meets **both** criteria:
+- It comes from the project's token system (CSS variable, Tailwind config, theme object)
+- It is used **consistently** across the codebase (no conflicting values for the same purpose)
+
+Mark each auto-filled value with `[auto-filled]`:
+```markdown
+| `--color-primary` | #3B82F6 [auto-filled] | Primary actions, links |
+```
+
+### What to flag for designer decision
+
+When the code uses **multiple values** for the same purpose (identified in
+visual-language.md under "Inconsistent"), list all variants and ask the designer to pick:
+
+```markdown
+| `--color-border` | [inconsistent] #E5E7EB / #D1D5DB / #E2E8F0 | Borders, dividers — pick one |
+```
+
+### What to leave blank
+
+When no value exists in the code for a DESIGN.md field, mark it so the designer
+knows it's not an oversight:
+
+```markdown
+| `--shadow-lg` | [missing] | Modals, popovers |
+```
+
+### Sections to auto-fill
+
+| DESIGN.md section | Source |
+|-------------------|--------|
+| Brand | Product name from `<title>`, README, or `package.json` `name`. Voice and logo: leave blank. |
+| Colors — Primary palette | Tokenized colors from token-audit.md |
+| Colors — Semantic colors | Semantic tokens (success, warning, error, info) from token system |
+| Colors — Neutrals | Background, surface, border, text tokens |
+| Typography | Font families from `@font-face` / Google Fonts links, sizes from token system |
+| Spacing | Spacing scale from Tailwind config or CSS variables |
+| Border radius | Radius tokens |
+| Shadows | Shadow tokens |
+| Breakpoints | From Tailwind config or media queries in code |
+| Animation | Duration/easing from CSS variables or transition patterns in code |
+
+### Sections to NOT auto-fill
+
+These require designer intent, not code facts:
+- **Component guidelines** — design decisions about how components should behave
+- **Visual references** — mood, inspiration, aesthetic direction
+- **Figma** — links the designer provides
+- **Notes** — designer's additional rules
+
+### After populating
+
+Tell the designer what happened:
+```
+I pre-filled DESIGN.md from your codebase:
+- 18 values auto-filled (consistent in code) — review and approve
+- 4 values flagged as inconsistent — pick which one you want
+- 6 values missing — fill in from Figma or leave blank for now
+
+Open DESIGN.md to review. Search for [auto-filled], [inconsistent], and [missing].
+```
 
 ---
 
@@ -459,9 +540,11 @@ Do NOT dump files and say "done." Present a guided walkthrough:
    - "Lint: 0 errors. Tests: 24 pass, 2 fail. TypeScript: clean."
    - Or: "No lint, no tests, no TypeScript. We're starting from zero on quality."
    - "Storybook: 15 stories covering 8 of 24 components" or "No Storybook installed"
-8. **Tooling gaps**: check what skills and MCP servers are installed vs recommended.
+8. **DESIGN.md status**: "I pre-filled DESIGN.md with N values from your code.
+   Review the `[auto-filled]` values and resolve the `[inconsistent]` ones."
+9. **Tooling gaps**: check what skills and MCP servers are installed vs recommended.
    Suggest missing ones (see Step 11).
-9. **Recommended first actions**:
+10. **Recommended first actions**:
    - Quick wins (fix hardcoded colors, add missing empty states)
    - Important but larger (consolidate duplicate components, add responsive layouts)
    - Quality gaps (add Storybook stories, add missing tests, fix lint warnings)

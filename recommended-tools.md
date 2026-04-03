@@ -86,3 +86,4 @@ Setup script detects the project and suggests relevant tools from this list.
 |-------|-----------|
 | **onboarding** | Designer-centric codebase analysis: product overview, entity map, screen inventory, component graph, user flows, visual language. No external tool does this. |
 | **sync** | Vault synchronization with code changes, preserving designer annotations. Unique to our vault approach. |
+| **sync-tokens** | Three-way token reconciliation: Figma Variables ↔ DESIGN.md ↔ Code. Auto-detects direction, shows diff, asks before writing. No external tool bridges all three sources with designer approval flow. |

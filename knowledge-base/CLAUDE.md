@@ -150,6 +150,7 @@ After any knowledge base update, append to `_sync-log.md`:
 1. Check **visual-language.md** — what values are actually used?
 2. Check **token-audit.md** — is the value tokenized or hardcoded?
 3. Use tokens. If none exists, warn the designer.
+4. If token drift is suspected (Figma ≠ code), suggest running `vdk-sync-tokens`.
 
 ### Before making any change
 1. Check **baseline/quality-snapshot.md** — what's the current quality state?

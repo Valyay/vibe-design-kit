@@ -45,6 +45,9 @@ the designer doesn't need to ask for them.
 | Writing E2E or component tests | Follow `playwright-skill` patterns |
 | Designer asks to critique a design | Use `/critique` from impeccable |
 | Designer asks to improve copy/labels | Use `/clarify` from impeccable |
+| Designer mentions Figma tokens, token sync, or token drift | Run `vdk-sync-tokens` skill |
+| Designer pastes a Figma URL and asks about tokens/variables | Run `vdk-sync-tokens` skill |
+| After code changes to token files (CSS vars, Tailwind config, theme) | Suggest running `vdk-sync-tokens` |
 
 You do not need explicit invocation. Read the skill file and apply its principles inline.
 

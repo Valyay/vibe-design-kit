@@ -13,6 +13,7 @@ Run all automated checks first:
 
 Then check manually:
 - Token compliance — any hardcoded colors, spacing, fonts?
+- Token drift — do Figma, DESIGN.md, and code agree? (run sync-tokens if unsure)
 - Component states — are all five states handled? (loading, error, empty, populated, partial)
 - Responsive — does it work at mobile, tablet, desktop?
 - Duplicates — did I create something that already exists?
