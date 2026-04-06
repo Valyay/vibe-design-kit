@@ -28,6 +28,19 @@ Setup script detects the project and suggests relevant tools from this list.
 | [superpowers](https://github.com/obra/superpowers) | Disciplined dev: TDD, planning, code review, debugging, verification. | `claude plugin add obra/superpowers` |
 | [code-review-graph](https://github.com/tirth8205/code-review-graph) | Knowledge graph for duplicate detection and codebase understanding. | `claude plugin add tirth8205/code-review-graph` |
 
+## Planning & Safety Skills (mattpocock/skills)
+
+Auto-installed by setup.sh. See CLAUDE.md for when each one fires.
+
+| Tool | What it does | When to use |
+|------|-------------|------------|
+| [grill-me](https://github.com/mattpocock/skills) | Interviews relentlessly until all ambiguities are resolved. Prevents building the wrong thing. | Before any task with unclear scope or missing details |
+| [tdd](https://github.com/mattpocock/skills) | Red-green-refactor: failing test first, then implement, then refactor. | Before writing any non-trivial implementation code |
+| [git-guardrails-claude-code](https://github.com/mattpocock/skills) | Installs hooks that block dangerous git commands (force push, reset --hard, branch delete). | One-time install; hooks run automatically after that |
+| [triage-issue](https://github.com/mattpocock/skills) | Investigates bugs, traces root cause through the call stack, creates a fix plan. | When designer reports unexpected behavior before touching code |
+| [ubiquitous-language](https://github.com/mattpocock/skills) | Extracts DDD-style domain glossary from the codebase. | When running onboarding or updating entity-map.md in the vault |
+| [improve-codebase-architecture](https://github.com/mattpocock/skills) | Identifies architectural improvement opportunities in brownfield projects. | When designer asks to clean up or restructure — assess first, then act |
+
 ## Framework-specific Skills
 
 ### React / Next.js

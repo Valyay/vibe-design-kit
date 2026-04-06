@@ -473,6 +473,36 @@ install_global_skill \
   "playwright-skill" \
   "npx skills add testdino-hq/playwright-skill -y -g -a claude-code"
 
+install_global_skill \
+  "grill-me (clarify requirements before implementation)" \
+  "grill-me" \
+  "npx skills add mattpocock/skills --skill grill-me -a claude-code -y -g"
+
+install_global_skill \
+  "tdd (red-green-refactor cycle)" \
+  "tdd" \
+  "npx skills add mattpocock/skills --skill tdd -a claude-code -y -g"
+
+install_global_skill \
+  "git-guardrails-claude-code (block dangerous git commands)" \
+  "git-guardrails-claude-code" \
+  "npx skills add mattpocock/skills --skill git-guardrails-claude-code -a claude-code -y -g"
+
+install_global_skill \
+  "triage-issue (investigate bugs in brownfield codebases)" \
+  "triage-issue" \
+  "npx skills add mattpocock/skills --skill triage-issue -a claude-code -y -g"
+
+install_global_skill \
+  "ubiquitous-language (domain glossary for knowledge base)" \
+  "ubiquitous-language" \
+  "npx skills add mattpocock/skills --skill ubiquitous-language -a claude-code -y -g"
+
+install_global_skill \
+  "improve-codebase-architecture (brownfield architectural analysis)" \
+  "improve-codebase-architecture" \
+  "npx skills add mattpocock/skills --skill improve-codebase-architecture -a claude-code -y -g"
+
 # ── Project-specific skills (framework-dependent) ────────────
 echo ""
 echo "  Project skills (specific to this project):"
@@ -564,6 +594,7 @@ if [[ -f "$SETTINGS_FILE" ]]; then
       .[0] as $existing | .[1] as $template |
       $existing * {
         hooks: {
+          SessionStart: (($existing.hooks.SessionStart // []) + ($template.hooks.SessionStart // []) | dedup_hooks // []),
           PreToolUse: (($existing.hooks.PreToolUse // []) + ($template.hooks.PreToolUse // []) | dedup_hooks // []),
           PostToolUse: (($existing.hooks.PostToolUse // []) + ($template.hooks.PostToolUse // []) | dedup_hooks // [])
         },
@@ -594,6 +625,7 @@ fi
 
 echo ""
 echo "  Hooks enforce these rules automatically:"
+echo "    - Check knowledge base freshness on session start"
 echo "    - Block hardcoded colors, pixel values, font-family in UI files"
 echo "    - Warn about duplicate components before creation"
 echo "    - Warn when editing baseline and sync-log files directly"

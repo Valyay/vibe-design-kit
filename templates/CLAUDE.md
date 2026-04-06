@@ -11,6 +11,7 @@ fix it before presenting.
 This project has Claude Code hooks (`.claude/hooks/`) that **automatically enforce** key rules.
 These are not suggestions — they run as shell scripts and can block your actions:
 
+- **Sync freshness** — On session start, checks `_sync-log.md` for staleness. If the knowledge base hasn't been synced in 7+ days (configurable via `SYNC_STALE_DAYS`), you'll be prompted to suggest running the sync skill.
 - **Hardcoded values** — Edit/Write to UI files is blocked if hardcoded hex colors, pixel values, or font-family declarations are detected. Use design tokens instead.
 - **Duplicate components** — Writing a new component file triggers a similarity search. You'll be warned if a similar component already exists.
 - **Vault protection** — Editing `baseline/` files or `_sync-log.md` triggers a warning. These are normally updated by the sync skill.
@@ -48,6 +49,11 @@ the designer doesn't need to ask for them.
 | Designer mentions Figma tokens, token sync, or token drift | Run `vdk-sync-tokens` skill |
 | Designer pastes a Figma URL and asks about tokens/variables | Run `vdk-sync-tokens` skill |
 | After code changes to token files (CSS vars, Tailwind config, theme) | Suggest running `vdk-sync-tokens` |
+| Task or brief has unclear scope, missing details, or conflicting signals | Run `/grill-me` to resolve all ambiguities **before** starting implementation |
+| Implementing new functionality (any non-trivial code change) | Apply `tdd` skill: write a failing test first, then implement, then refactor |
+| Designer reports unexpected behavior, a regression, or a bug | Run `/triage-issue` to investigate root cause **before** touching code |
+| Designer asks to clean up, restructure, or improve code quality | Run `/improve-codebase-architecture` for an assessment first |
+| Updating entity map or building domain vocabulary in vault | Run `/ubiquitous-language` to extract consistent terminology from code |
 
 You do not need explicit invocation. Read the skill file and apply its principles inline.
 
