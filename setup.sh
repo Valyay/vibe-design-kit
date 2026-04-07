@@ -503,6 +503,11 @@ install_global_skill \
   "improve-codebase-architecture" \
   "npx skills add mattpocock/skills --skill improve-codebase-architecture -a claude-code -y -g"
 
+install_global_skill \
+  "obsidian-flavored-markdown (callouts, embeds, wikilinks, properties)" \
+  "obsidian-flavored-markdown" \
+  "npx skills add kepano/obsidian-skills --skill obsidian-flavored-markdown -a claude-code -y -g"
+
 # ── Graphify — AST-accurate component graph ──────────────────
 echo ""
 echo "  Graphify (AST-based code knowledge graph):"
@@ -602,36 +607,53 @@ SETTINGS_TEMPLATE="$TEMPLATES_DIR/settings.json"
 
 if [[ -f "$SETTINGS_FILE" ]]; then
   # Merge: add hooks and permissions from template to existing settings
-  if command -v jq &> /dev/null; then
-    MERGED=$(jq -s '
-      # Deduplicate hook entries by their command path
-      def dedup_hooks: [foreach .[] as $h ({seen: []};
-        if (.seen | map(.hooks[0].command) | index($h.hooks[0].command)) then .
-        else .seen += [$h] end; .seen)] | last;
-      .[0] as $existing | .[1] as $template |
-      $existing * {
-        hooks: {
-          SessionStart: (($existing.hooks.SessionStart // []) + ($template.hooks.SessionStart // []) | dedup_hooks // []),
-          PreToolUse: (($existing.hooks.PreToolUse // []) + ($template.hooks.PreToolUse // []) | dedup_hooks // []),
-          PostToolUse: (($existing.hooks.PostToolUse // []) + ($template.hooks.PostToolUse // []) | dedup_hooks // [])
-        },
-        permissions: {
-          allow: (($existing.permissions.allow // []) + ($template.permissions.allow // []) | unique)
-        },
-        plugins: (($existing.plugins // []) + ($template.plugins // []) | unique)
-      }
-    ' "$SETTINGS_FILE" "$SETTINGS_TEMPLATE" 2>/dev/null) || true
+  if command -v python3 &> /dev/null; then
+    MERGED=$(python3 - "$SETTINGS_FILE" "$SETTINGS_TEMPLATE" <<'PYEOF'
+import json, sys
+
+def dedup_hooks(hooks):
+    seen = {}
+    for entry in hooks:
+        cmds = entry.get("hooks", [{}])
+        key = cmds[0].get("command", "") if cmds else ""
+        if key not in seen:
+            seen[key] = entry
+    return list(seen.values())
+
+with open(sys.argv[1]) as f:
+    existing = json.load(f)
+with open(sys.argv[2]) as f:
+    template = json.load(f)
+
+ex_hooks = existing.get("hooks") or {}
+tpl_hooks = template.get("hooks") or {}
+
+merged = dict(existing)
+merged["hooks"] = {
+    "SessionStart": dedup_hooks(ex_hooks.get("SessionStart", []) + tpl_hooks.get("SessionStart", [])),
+    "PreToolUse":   dedup_hooks(ex_hooks.get("PreToolUse",   []) + tpl_hooks.get("PreToolUse",   [])),
+    "PostToolUse":  dedup_hooks(ex_hooks.get("PostToolUse",  []) + tpl_hooks.get("PostToolUse",  [])),
+}
+merged["permissions"] = {
+    "allow": sorted(set(existing.get("permissions", {}).get("allow", []) +
+                        template.get("permissions", {}).get("allow", [])))
+}
+merged["plugins"] = sorted(set(existing.get("plugins", []) + template.get("plugins", [])))
+
+print(json.dumps(merged, indent=2))
+PYEOF
+) 2>/dev/null || true
 
     if [[ -n "$MERGED" ]]; then
       echo "$MERGED" > "$SETTINGS_FILE"
       echo "  ✓  Hooks configuration merged into existing .claude/settings.json"
     else
-      echo "  ⚠  Could not merge settings.json — install hooks config manually"
+      echo "  ⚠  Could not merge settings.json — copy hooks config manually"
       echo "     See templates/settings.json for the hooks configuration"
     fi
   else
-    echo "  ⚠  jq not found — cannot merge settings.json automatically"
-    echo "     Install jq or manually copy hooks config from templates/settings.json"
+    echo "  ⚠  python3 not found — cannot merge settings.json automatically"
+    echo "     Install python3 or manually copy hooks config from templates/settings.json"
   fi
 else
   # No existing settings — copy template directly

@@ -27,6 +27,12 @@ Setup script detects the project and suggests relevant tools from this list.
 |------|-------------|---------|
 | [graphify](https://github.com/safishamsi/graphify) | AST-based code knowledge graph (tree-sitter + Leiden clustering). Generates accurate import edges, call graphs, community clusters, wiki articles, and interactive HTML graph. Used by VDK onboarding to produce component-graph.md structural data. Up to 71x token reduction vs reading raw files. | `pip install graphifyy && graphify install` |
 
+## Obsidian / Vault Formatting
+
+| Tool | What it does | Install |
+|------|-------------|---------|
+| [obsidian-flavored-markdown](https://github.com/kepano/obsidian-skills) | Teaches AI all Obsidian formats: `[[wikilinks]]`, `![[embeds]]`, `> [!callout]` types, YAML properties, Bases views, JSON Canvas. VDK uses this skill when writing vault documents so they render correctly in Obsidian's graph view, backlinks, and search. Replaces hand-rolled Obsidian formatting. | `npx skills add kepano/obsidian-skills --skill obsidian-flavored-markdown -a claude-code` |
+
 ## Development Workflow Skills
 
 | Tool | What it does | Install |

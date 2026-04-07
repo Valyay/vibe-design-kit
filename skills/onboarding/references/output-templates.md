@@ -34,8 +34,8 @@ For each screen:
 ```markdown
 ## /path — Screen Name
 
-![desktop](screenshots/name--desktop.png)
-![mobile](screenshots/name--mobile.png)
+![[screenshots/name--desktop.png]]
+![[screenshots/name--mobile.png]]
 
 **Purpose**: What users do here
 **Entities on screen**: Entity1, Entity2
