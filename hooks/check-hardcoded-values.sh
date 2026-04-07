@@ -4,13 +4,13 @@
 # Enforces: "No hardcoded values" rule from CLAUDE.md
 set -euo pipefail
 
-if ! command -v jq &>/dev/null; then
-  echo "VDK: jq is required for enforcement hooks. Install with: brew install jq" >&2
+if ! command -v python3 &>/dev/null; then
+  echo "VDK: python3 is required for enforcement hooks" >&2
   exit 0
 fi
 
 INPUT=$(cat)
-FILE_PATH=$(echo "$INPUT" | jq -r '.tool_input.file_path // empty')
+FILE_PATH=$(echo "$INPUT" | python3 -c "import json,sys; d=json.load(sys.stdin); print(d.get('tool_input',{}).get('file_path',''))" || true)
 
 # Only check UI-related files
 case "$FILE_PATH" in
@@ -26,12 +26,12 @@ case "$FILE_PATH" in
 esac
 
 # Get the content being written/edited
-CONTENT=""
-if echo "$INPUT" | jq -e '.tool_input.content' > /dev/null 2>&1; then
-  CONTENT=$(echo "$INPUT" | jq -r '.tool_input.content')
-elif echo "$INPUT" | jq -e '.tool_input.new_string' > /dev/null 2>&1; then
-  CONTENT=$(echo "$INPUT" | jq -r '.tool_input.new_string')
-fi
+CONTENT=$(echo "$INPUT" | python3 -c "
+import json, sys
+d = json.load(sys.stdin)
+ti = d.get('tool_input', {})
+print(ti.get('content') or ti.get('new_string') or '')
+" || true)
 
 if [[ -z "$CONTENT" ]]; then
   exit 0

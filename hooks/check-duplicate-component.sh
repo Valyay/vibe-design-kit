@@ -4,13 +4,13 @@
 # Enforces: "Duplicate prevention" rule from CLAUDE.md
 set -euo pipefail
 
-if ! command -v jq &>/dev/null; then
-  echo "VDK: jq is required for enforcement hooks. Install with: brew install jq" >&2
+if ! command -v python3 &>/dev/null; then
+  echo "VDK: python3 is required for enforcement hooks" >&2
   exit 0
 fi
 
 INPUT=$(cat)
-FILE_PATH=$(echo "$INPUT" | jq -r '.tool_input.file_path // empty')
+FILE_PATH=$(echo "$INPUT" | python3 -c "import json,sys; d=json.load(sys.stdin); print(d.get('tool_input',{}).get('file_path',''))" || true)
 
 # Only check when creating new files in component-like directories
 case "$FILE_PATH" in

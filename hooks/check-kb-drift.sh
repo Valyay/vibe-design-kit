@@ -6,12 +6,12 @@
 # Non-blocking: always exits 0.
 set -euo pipefail
 
-if ! command -v jq &>/dev/null; then
+if ! command -v python3 &>/dev/null; then
   exit 0
 fi
 
 INPUT=$(cat)
-FILE_PATH=$(echo "$INPUT" | jq -r '.tool_input.file_path // empty')
+FILE_PATH=$(echo "$INPUT" | python3 -c "import json,sys; d=json.load(sys.stdin); print(d.get('tool_input',{}).get('file_path',''))" || true)
 
 [[ -n "$FILE_PATH" ]] || exit 0
 
