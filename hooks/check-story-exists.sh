@@ -33,7 +33,8 @@ PROJECT_DIR="${CLAUDE_PROJECT_DIR:-.}"
 
 # Check if Storybook is present in the project
 if [[ ! -d "$PROJECT_DIR/.storybook" ]]; then
-  # No Storybook — skip this check
+  echo "VDK: Storybook not detected — story coverage check skipped."
+  echo "  Add Storybook to enforce the 5-state component contract (Loading, Error, Empty, Populated, Partial)."
   exit 0
 fi
 
@@ -60,9 +61,11 @@ for pattern in \
 done
 
 if [[ "$STORY_EXISTS" == "false" ]]; then
-  echo "VDK: New component '$NAME_NO_EXT' has no Storybook story yet."
-  echo "Create a story with all 5 states: Loading, Error, Empty, Populated, Partial."
-  echo "See components/CLAUDE.md for the Storybook + E2E pipeline."
+  echo "VDK: '$NAME_NO_EXT' has no Storybook story."
+  echo "  Create a story covering all 5 states: Loading, Error, Empty, Populated, Partial."
+  echo "  See components/CLAUDE.md for the Storybook + E2E pipeline."
+else
+  echo "VDK: '$NAME_NO_EXT' story exists — 5-state coverage assumed."
 fi
 
 exit 0

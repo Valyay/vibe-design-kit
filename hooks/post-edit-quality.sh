@@ -22,6 +22,12 @@ PROJECT_DIR="${CLAUDE_PROJECT_DIR:-.}"
 
 # Need package.json to detect tools
 if [[ ! -f "$PROJECT_DIR/package.json" ]]; then
+  QUALITY_LOG="/tmp/vdk-quality-$(printf '%s' "$PROJECT_DIR" | tr '/' '_').log"
+  if ! grep -qF "no-pkg-warned" "$QUALITY_LOG" 2>/dev/null; then
+    echo "no-pkg-warned" >> "$QUALITY_LOG"
+    echo "VDK: No package.json found — quality checks skipped."
+    echo "  Add a package.json with 'lint' and 'typecheck' scripts to enable automatic quality gates."
+  fi
   exit 0
 fi
 
@@ -105,6 +111,13 @@ run_typecheck
 
 if [[ -n "$RESULTS" ]]; then
   echo -e "VDK quality check for $(basename "$FILE_PATH"):\n$RESULTS"
+else
+  QUALITY_LOG="/tmp/vdk-quality-$(printf '%s' "$PROJECT_DIR" | tr '/' '_').log"
+  if ! grep -qF "no-tools-warned" "$QUALITY_LOG" 2>/dev/null; then
+    echo "no-tools-warned" >> "$QUALITY_LOG"
+    echo "VDK: No lint or typecheck tools detected — quality checks skipped."
+    echo "  Add a 'lint' script or install ESLint, Biome, or tsc to enable quality gates."
+  fi
 fi
 
 exit 0

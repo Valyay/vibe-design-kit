@@ -37,7 +37,16 @@ PROJECT_DIR="${CLAUDE_PROJECT_DIR:-.}"
 KB_DIR=$(find "$PROJECT_DIR" -path "*/node_modules" -prune -o -path "*/.git" -prune -o -path "*/dist" -prune -o -path "*/build" -prune -o \
   -path "*/design-knowledge/*/_index.md" -not -path "*/_project-template/*" -print 2>/dev/null | head -1 | xargs dirname 2>/dev/null || true)
 
-[[ -n "$KB_DIR" ]] || exit 0
+if [[ -z "$KB_DIR" ]]; then
+  # Print once per session so the designer knows context is missing
+  DRIFT_LOG="/tmp/vdk-kb-drift-$(printf '%s' "${CLAUDE_PROJECT_DIR:-.}" | tr '/' '_').log"
+  if ! grep -qF "no-kb-warned" "$DRIFT_LOG" 2>/dev/null; then
+    echo "no-kb-warned" >> "$DRIFT_LOG"
+    echo "VDK: No knowledge base found — editing UI code without project context."
+    echo "  Run the onboarding skill so the AI knows your components, entities, and flows."
+  fi
+  exit 0
+fi
 
 # Extract the filename and component-like name for searching
 FILENAME=$(basename "$FILE_PATH")

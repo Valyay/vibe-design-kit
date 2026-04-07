@@ -16,7 +16,15 @@ KB_DIR=$(find "$PROJECT_DIR" \
      -not -path "*/_project-template/*" -print \
   2>/dev/null | head -1 | xargs dirname 2>/dev/null || true)
 
-[[ -n "$KB_DIR" ]] || exit 0
+if [[ -z "$KB_DIR" ]]; then
+  echo "VDK ─────────────────────────────────────────"
+  echo "  knowledge base    not found"
+  echo "─────────────────────────────────────────────"
+  echo "  → run the onboarding skill before starting work"
+  echo "    until then the AI has no knowledge of your design"
+  echo "    system, components, or user flows"
+  exit 0
+fi
 
 SYNC_LOG="$KB_DIR/_sync-log.md"
 NOW_TS=$(date "+%s")
