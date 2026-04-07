@@ -32,19 +32,9 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/check-sync-freshness.sh",
-            "timeout": 10,
-            "statusMessage": "Checking knowledge base freshness..."
-          }
-        ]
-      },
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/check-wikilinks.sh",
-            "timeout": 10,
-            "statusMessage": "Validating wiki-links..."
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/session-report.sh",
+            "timeout": 15,
+            "statusMessage": "Checking knowledge base status..."
           }
         ]
       }
