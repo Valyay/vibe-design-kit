@@ -17,6 +17,8 @@ These are not suggestions — they run as shell scripts and can block your actio
 - **Vault protection** — Editing `baseline/` files or `_sync-log.md` triggers a warning. These are normally updated by the sync skill.
 - **Quality checks** — Lint and typecheck run automatically after every code edit.
 - **Storybook coverage** — Creating a new component without a story file triggers a reminder.
+- **KB drift** — After editing a code file that is referenced in knowledge base documents, you'll get an informational reminder to update the KB after completing the task.
+- **KB link validation** — On session start, scans all KB documents for `[[wiki-links]]` and checks that target files and `#headings` exist. Broken links are reported so you can fix them or run `vdk-kb-lint`.
 
 If a hook blocks you, fix the issue — do not try to bypass it.
 
@@ -48,12 +50,16 @@ the designer doesn't need to ask for them.
 | Designer asks to improve copy/labels | Use `/clarify` from impeccable |
 | Designer mentions Figma tokens, token sync, or token drift | Run `vdk-sync-tokens` skill |
 | Designer pastes a Figma URL and asks about tokens/variables | Run `vdk-sync-tokens` skill |
+| Designer pastes a Figma URL and asks "does this match?", "check the implementation", "how far are we from the mockup?" | Run `vdk-figma-audit` skill |
+| After modifying a component — designer asks "what changed?", "did anything shift?", "show me before/after" | Run `vdk-visual-diff` skill |
 | After code changes to token files (CSS vars, Tailwind config, theme) | Suggest running `vdk-sync-tokens` |
 | Task or brief has unclear scope, missing details, or conflicting signals | Run `/grill-me` to resolve all ambiguities **before** starting implementation |
 | Implementing new functionality (any non-trivial code change) | Apply `tdd` skill: write a failing test first, then implement, then refactor |
 | Designer reports unexpected behavior, a regression, or a bug | Run `/triage-issue` to investigate root cause **before** touching code |
 | Designer asks to clean up, restructure, or improve code quality | Run `/improve-codebase-architecture` for an assessment first |
 | Updating entity map or building domain vocabulary in vault | Run `/ubiquitous-language` to extract consistent terminology from code |
+| Sync-freshness reports many changed files, or after a major refactor | Run `vdk-kb-lint` skill to audit KB consistency |
+| Designer asks "is the knowledge base accurate?", "audit the docs" | Run `vdk-kb-lint` skill |
 
 You do not need explicit invocation. Read the skill file and apply its principles inline.
 
@@ -237,6 +243,11 @@ Pretend you are a senior engineer reviewing someone else's PR.
 - Am I putting sensitive data in URLs, logs, or client-side state?
 - Am I making API calls with proper authorization?
 
+**AI visual anti-pattern check**:
+- Does the output use any pattern from the "AI visual anti-patterns" list above?
+- Can I remove any visual effect without losing information or clarity?
+- Would a designer recognize this as generic AI-generated UI?
+
 **If the self-review finds issues — fix them before showing the designer.**
 
 The designer will never see these problems in the code. You are the last line of defense.
@@ -297,6 +308,35 @@ All visual values (colors, spacing, typography, radii, shadows) MUST come from:
 
 **No hardcoded values.** If you are about to write a hex color, pixel value, or font name
 that is not in the token system — stop, warn the designer, and suggest the closest token.
+
+## AI visual anti-patterns
+
+AI-generated UI tends toward a recognizable "slop" aesthetic. These patterns signal
+**generic AI output** rather than intentional design. Do not use them unless
+the designer explicitly requests it with a stated reason.
+
+**Banned by default:**
+
+- **Purple-to-blue gradients** — the most common AI default. If a gradient is needed,
+  use brand colors from the token system instead.
+- **Glassmorphism (frosted glass / backdrop-blur)** — decorative without function.
+  Use it only when the designer specifies it for a layering reason (e.g., overlay on video).
+- **Generic hero sections with gradient text** — "startup landing page" aesthetic.
+  Use the project's actual typography hierarchy and solid colors instead.
+- **Excessive shadows and glows** — `box-shadow` stacking, neon glows, ambient light effects.
+  Use the project's shadow tokens (typically 1-2 levels) instead.
+- **Decorative animations without function** — floating elements, parallax, particle effects,
+  pulsing rings. Every animation must serve a purpose: guide attention, show state change,
+  or provide feedback. Remove it if you cannot name the purpose.
+- **"Startup landing page" patterns in product UI** — oversized headings, full-width gradients,
+  testimonial carousels, three-column feature grids. Product interfaces are tools, not marketing sites.
+
+**The test**: if you remove the visual effect and the UI still communicates the same information
+with the same clarity — the effect is decoration, not design. Remove it.
+
+**When the designer asks for one of these patterns**: implement it. These rules constrain
+your defaults, not the designer's explicit choices. But mention the concern once:
+"This uses a gradient — want me to keep it, or try the brand palette instead?"
 
 ## Component states
 

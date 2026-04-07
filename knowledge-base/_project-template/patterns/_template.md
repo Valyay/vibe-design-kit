@@ -67,6 +67,6 @@
 
 ## Related
 
-- <!-- Component: DataTable -->
-- <!-- Flow: Browse items -->
-- <!-- Decision: ADR-005 table virtualization -->
+- <!-- [[component-graph]] — DataTable component -->
+- <!-- [[flows/browse-items]] — Browse items flow -->
+- <!-- [[decisions/005-table-virtualization]] — ADR-005 -->

@@ -62,6 +62,31 @@
 | `--color-text-secondary` | <!-- #6B7280 --> | Secondary text |
 | `--color-text-muted` | <!-- #9CA3AF --> | Disabled, placeholder |
 
+## Theming
+
+<!-- Optional. Delete this section if the project has only one visual mode.
+     Add rows only for tokens that CHANGE between modes — not the full list. -->
+
+- **Theme strategy**: <!-- CSS class (.dark), data attribute (data-theme="dark"), or prefers-color-scheme -->
+- **Default mode**: <!-- light / dark / system -->
+
+### Dark mode overrides
+
+<!-- Only list tokens whose value differs from the light mode values in ## Colors above.
+     Onboarding auto-fills this from `prefers-color-scheme` or `.dark` blocks in code. -->
+
+| Token | Light value | Dark value | Notes |
+|-------|-------------|------------|-------|
+| `--color-bg` | <!-- #FFFFFF --> | <!-- #0F172A --> | Page background |
+| `--color-surface` | <!-- #F9FAFB --> | <!-- #1E293B --> | Card/section background |
+| `--color-border` | <!-- #E5E7EB --> | <!-- #334155 --> | Borders, dividers |
+| `--color-text` | <!-- #111827 --> | <!-- #F1F5F9 --> | Primary text |
+| `--color-text-secondary` | <!-- #6B7280 --> | <!-- #94A3B8 --> | Secondary text |
+| `--color-text-muted` | <!-- #9CA3AF --> | <!-- #64748B --> | Disabled, placeholder |
+
+<!-- To add another theme (e.g. high-contrast, brand variant):
+     copy the ### block above, rename it, and fill in the override values. -->
+
 ## Typography
 
 <!-- Source: @font-face declarations, Google Fonts links, Tailwind font config.

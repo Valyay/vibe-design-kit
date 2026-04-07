@@ -41,4 +41,6 @@ Accepted
 
 ## Related
 
-- <!-- Link to related ADRs, issues, or PRs -->
+- <!-- [[decisions/xxx-related-adr]] — related ADR -->
+- <!-- [[issues/xxx]] — related issue -->
+- <!-- [[entity-map#entity-name]] — affected entity -->

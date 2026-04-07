@@ -150,3 +150,13 @@ Confirm to the designer that the baseline has been updated with the new approved
 ## Example
 
 For a request like "I changed the card component — does it look right?", follow Mode B (Compare) starting from Step 1.
+
+---
+
+## Related skills
+
+| Skill | When to use instead |
+|---|---|
+| **figma-audit** | Designer has a Figma URL and wants to know if the *current implementation* matches the design — use this before or after making changes to check against the source of truth. |
+
+**Typical workflow:** run `figma-audit` to find gaps → fix them → run `visual-diff` compare to confirm the changes look correct and nothing else regressed.

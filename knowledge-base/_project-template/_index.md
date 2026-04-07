@@ -10,20 +10,20 @@
 
 | Document | Summary | Last updated |
 |----------|---------|-------------|
-| [product-overview.md](product-overview.md) | <!-- What the product does, who uses it, key terminology --> | <!-- YYYY-MM-DD --> |
-| [entity-map.md](entity-map.md) | <!-- N entities, key relationships, lifecycle states --> | <!-- YYYY-MM-DD --> |
-| [screen-inventory.md](screen-inventory.md) | <!-- N screens catalogued, N with screenshots --> | <!-- YYYY-MM-DD --> |
-| [component-graph.md](component-graph.md) | <!-- N components across N pages, N duplicates found --> | <!-- YYYY-MM-DD --> |
-| [user-flows.md](user-flows.md) | <!-- N flows documented, N with E2E tests, N gaps found --> | <!-- YYYY-MM-DD --> |
-| [visual-language.md](visual-language.md) | <!-- N tokens, N hardcoded values, consistency score --> | <!-- YYYY-MM-DD --> |
+| [[product-overview]] | <!-- What the product does, who uses it, key terminology --> | <!-- YYYY-MM-DD --> |
+| [[entity-map]] | <!-- N entities, key relationships, lifecycle states --> | <!-- YYYY-MM-DD --> |
+| [[screen-inventory]] | <!-- N screens catalogued, N with screenshots --> | <!-- YYYY-MM-DD --> |
+| [[component-graph]] | <!-- N components across N pages, N duplicates found --> | <!-- YYYY-MM-DD --> |
+| [[user-flows]] | <!-- N flows documented, N with E2E tests, N gaps found --> | <!-- YYYY-MM-DD --> |
+| [[visual-language]] | <!-- N tokens, N hardcoded values, consistency score --> | <!-- YYYY-MM-DD --> |
 
 ## Supporting reference
 
 | Document | Summary | Last updated |
 |----------|---------|-------------|
-| [token-audit.md](token-audit.md) | <!-- Raw token data: all design tokens and hardcoded values --> | <!-- YYYY-MM-DD --> |
-| [architecture.md](architecture.md) | <!-- Tech stack, build tools, project structure --> | <!-- YYYY-MM-DD --> |
-| [baseline/quality-snapshot.md](baseline/quality-snapshot.md) | <!-- Lint: N errors, Tests: N pass / N fail, TypeScript: N errors --> | <!-- YYYY-MM-DD --> |
+| [[token-audit]] | <!-- Raw token data: all design tokens and hardcoded values --> | <!-- YYYY-MM-DD --> |
+| [[architecture]] | <!-- Tech stack, build tools, project structure --> | <!-- YYYY-MM-DD --> |
+| [[baseline/quality-snapshot]] | <!-- Lint: N errors, Tests: N pass / N fail, TypeScript: N errors --> | <!-- YYYY-MM-DD --> |
 
 ## Detail layer
 
@@ -31,11 +31,11 @@
 
 | Document | Type | Summary |
 |----------|------|---------|
-| <!-- [entities/user.md](entities/user.md) --> | <!-- entity --> | <!-- User roles, permissions, profile fields --> |
-| <!-- [decisions/001-auth-provider.md](decisions/001-auth-provider.md) --> | <!-- decision --> | <!-- Chose NextAuth over Clerk: self-hosted requirement --> |
-| <!-- [issues/duplicate-tables.md](issues/duplicate-tables.md) --> | <!-- issue --> | <!-- DataTable and NewTable both active, migration needed --> |
-| <!-- [flows/checkout.md](flows/checkout.md) --> | <!-- flow --> | <!-- 5-step checkout: cart → address → payment → review → confirmation --> |
-| <!-- [patterns/form-validation.md](patterns/form-validation.md) --> | <!-- pattern --> | <!-- react-hook-form + zod, inline errors, toast on submit --> |
+| <!-- [[entities/user]] --> | <!-- entity --> | <!-- User roles, permissions, profile fields --> |
+| <!-- [[decisions/001-auth-provider]] --> | <!-- decision --> | <!-- Chose NextAuth over Clerk: self-hosted requirement --> |
+| <!-- [[issues/duplicate-tables]] --> | <!-- issue --> | <!-- DataTable and NewTable both active, migration needed --> |
+| <!-- [[flows/checkout]] --> | <!-- flow --> | <!-- 5-step checkout: cart → address → payment → review → confirmation --> |
+| <!-- [[patterns/form-validation]] --> | <!-- pattern --> | <!-- react-hook-form + zod, inline errors, toast on submit --> |
 
 ## Quick lookup
 
@@ -43,10 +43,10 @@
 
 | Entity | Defined in | Screens | Components | Flows |
 |--------|-----------|---------|------------|-------|
-| <!-- Organization --> | <!-- entity-map.md#organization --> | <!-- /dashboard, /settings --> | <!-- OrgSwitcher, OrgForm --> | <!-- Create org, Manage billing --> |
-| <!-- Project --> | <!-- entity-map.md#project --> | <!-- /projects, /projects/[id] --> | <!-- ProjectCard, ProjectForm --> | <!-- Create project, Archive project --> |
-| <!-- Task --> | <!-- entity-map.md#task --> | <!-- /tasks/[id], /projects/[id] --> | <!-- TaskRow, TaskForm --> | <!-- Create task, Assign task --> |
-| <!-- User --> | <!-- entity-map.md#user --> | <!-- /profile, /settings/team --> | <!-- Avatar, UserMenu, MemberPicker --> | <!-- Sign up, Invite member --> |
+| <!-- Organization --> | <!-- [[entity-map#organization]] --> | <!-- /dashboard, /settings --> | <!-- OrgSwitcher, OrgForm --> | <!-- Create org, Manage billing --> |
+| <!-- Project --> | <!-- [[entity-map#project]] --> | <!-- /projects, /projects/[id] --> | <!-- ProjectCard, ProjectForm --> | <!-- Create project, Archive project --> |
+| <!-- Task --> | <!-- [[entity-map#task]] --> | <!-- /tasks/[id], /projects/[id] --> | <!-- TaskRow, TaskForm --> | <!-- Create task, Assign task --> |
+| <!-- User --> | <!-- [[entity-map#user]] --> | <!-- /profile, /settings/team --> | <!-- Avatar, UserMenu, MemberPicker --> | <!-- Sign up, Invite member --> |
 
 ## Designer annotations count
 

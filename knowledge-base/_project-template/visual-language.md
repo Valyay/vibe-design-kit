@@ -142,4 +142,4 @@
 
 ## Detailed token data
 
-See [token-audit.md](token-audit.md) for the full list of tokenized and hardcoded values.
+See [[token-audit]] for the full list of tokenized and hardcoded values.

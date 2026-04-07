@@ -45,7 +45,7 @@
 
 ## Related
 
-- <!-- Page: /settings -->
-- <!-- Component: ProfileForm -->
-- <!-- Entity: User -->
+- <!-- [[screen-inventory]] — /settings page -->
+- <!-- [[component-graph]] — ProfileForm component -->
+- <!-- [[entity-map#user]] — User entity -->
 - <!-- E2E test: settings.spec.ts -->

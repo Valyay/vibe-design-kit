@@ -133,6 +133,9 @@ For CSS: add to the `:root` block in the project's CSS file.
 For Tailwind: add to `theme.extend` in `tailwind.config.{ts,js}`.
 For theme objects: add to the existing export in the theme file.
 For DESIGN.md: show a diff of the table row changes.
+For dark mode: generate a `.dark { }` or `[data-theme="dark"] { }` override block using only
+the tokens in DESIGN.md's `### Dark mode overrides` table. Match the strategy already in code
+(class-based vs. attribute-based vs. `prefers-color-scheme`) — do not introduce a new one.
 
 Always include the target file path: "Here's the CSS to add to `src/styles/globals.css`. Want me to insert it?"
 

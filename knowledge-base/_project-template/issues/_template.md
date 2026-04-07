@@ -45,5 +45,6 @@
 
 ## Related
 
-- <!-- Related components, entities, or ADRs -->
-- <!-- GitHub issue link if exists -->
+- <!-- [[component-graph]] — affected component -->
+- <!-- [[entity-map#entity-name]] — affected entity -->
+- <!-- [[decisions/xxx]] — related ADR -->

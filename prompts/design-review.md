@@ -19,4 +19,20 @@ Then check manually:
 - Duplicates — did I create something that already exists?
 
 Give me a table: what was the baseline, what is it now, is it better or worse.
-Then the top 3 things to fix, by severity.
+Then report issues using this format:
+
+## Output format
+
+For each issue found, use this structure:
+
+```
+## Issue: [short description]
+- **Severity**: High | Medium | Low
+- **Category**: Color | Typography | Spacing | Layout | A11y | State | Responsive
+- **Expected**: [what should be — value, behavior, or screenshot]
+- **Actual**: [what is now]
+- **File**: [path/to/file:line]
+- **Fix**: [specific change to make]
+```
+
+Sort issues by severity (High first). Include all issues found, not just top 3.

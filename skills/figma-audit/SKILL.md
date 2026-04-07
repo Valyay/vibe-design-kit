@@ -119,14 +119,11 @@ If yes, switch to the implementation workflow: read the component, apply the cor
 - Preserve all existing functionality — this is a visual audit, not a refactor
 - If Playwright can't reach the page (auth required, not running), tell the designer and ask for a screenshot
 
-## Example
+## Related skills
 
-Designer says: "Can you check if the login page matches Figma? https://figma.com/design/ABC123/App?node-id=5-10"
+| Skill | When to use instead |
+|---|---|
+| **visual-diff** | No Figma URL — designer wants to see what a *code change* did visually (before vs. after). Use this to confirm fixes don't regress layout after an audit. |
 
-1. Parse URL → fileKey=`ABC123`, nodeId=`5:10`
-2. `get_screenshot(fileKey="ABC123", nodeId="5:10")` → Figma reference
-3. `get_design_context(fileKey="ABC123", nodeId="5:10")` → exact values
-4. `browser_navigate("http://localhost:3000/login")` + `browser_take_screenshot()` → current state
-5. Compare: layout, typography, colors, borders
-6. Report table with findings
-7. Ask if designer wants fixes applied
+**Typical workflow:** run `figma-audit` to find gaps → fix them → run `visual-diff` compare to confirm nothing else regressed.
+

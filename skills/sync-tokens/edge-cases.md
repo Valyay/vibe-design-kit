@@ -30,9 +30,20 @@ Which is the primary source? The others might be duplicates or layers."
 
 ## Dark mode / multiple modes
 
-Figma may have multiple modes (light/dark). Report each mode separately:
-"Figma has light and dark mode tokens. Code only has light mode.
-Want me to generate dark mode tokens too?"
+Figma may have multiple modes (light/dark). Check DESIGN.md's `## Theming` section first.
+
+**If `## Theming` is present**: compare Figma dark mode tokens against the "Dark mode overrides"
+table. Report drift the same way as light mode tokens.
+
+**If `## Theming` is absent**: offer to add it:
+"Figma has light and dark mode tokens but DESIGN.md has no Theming section yet.
+Want me to add it and fill in the dark mode overrides?"
+
+**If Figma is not connected**: check whether code has a `.dark { }`, `[data-theme="dark"] { }`,
+or `prefers-color-scheme: dark` block. If yes, offer to populate the Theming section from code:
+"Code has a dark mode override block. Want me to fill in DESIGN.md's Theming section from it?"
+
+Always report each mode separately in the reconciliation report (Step 4).
 
 ## Token naming mismatch
 

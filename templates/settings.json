@@ -37,6 +37,16 @@
             "statusMessage": "Checking knowledge base freshness..."
           }
         ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/check-wikilinks.sh",
+            "timeout": 10,
+            "statusMessage": "Validating wiki-links..."
+          }
+        ]
       }
     ],
     "PreToolUse": [
@@ -95,6 +105,30 @@
             "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/check-story-exists.sh",
             "timeout": 10,
             "statusMessage": "Checking Storybook coverage..."
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/report-recovery.sh",
+            "timeout": 10,
+            "async": true,
+            "statusMessage": "Reporting design token fixes..."
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/check-kb-drift.sh",
+            "timeout": 10,
+            "async": true,
+            "statusMessage": "Checking knowledge base drift..."
           }
         ]
       }

@@ -36,8 +36,25 @@ fi
 
 DAYS_AGO=$(( (NOW_TS - LAST_TS) / 86400 ))
 
+# Count UI-relevant files changed since last sync (git-based drift detection)
+CHANGED_FILES=0
+PROJECT_DIR="${CLAUDE_PROJECT_DIR:-.}"
+if command -v git &>/dev/null && git -C "$PROJECT_DIR" rev-parse --is-inside-work-tree &>/dev/null; then
+  CHANGED_FILES=$(git -C "$PROJECT_DIR" log --since="$LAST_DATE" --diff-filter=ACDMR --name-only --pretty=format: -- \
+    '*.tsx' '*.jsx' '*.ts' '*.js' '*.vue' '*.svelte' '*.css' '*.scss' \
+    2>/dev/null | grep -v '^$' | sort -u | wc -l | tr -d ' ')
+fi
+
 if [[ "$DAYS_AGO" -gt "$SYNC_STALE_DAYS" ]]; then
-  echo "VDK: Knowledge base last synced ${DAYS_AGO} days ago (${LAST_DATE}). It may be stale. Suggest running the sync skill: paste the contents of prompts/sync-vault.md"
+  MSG="VDK: Knowledge base last synced ${DAYS_AGO} days ago (${LAST_DATE})."
+  if [[ "$CHANGED_FILES" -gt 0 ]]; then
+    MSG="${MSG} ${CHANGED_FILES} code file(s) changed since then."
+  fi
+  MSG="${MSG} Suggest running the sync skill to update the knowledge base."
+  echo "$MSG"
+elif [[ "$CHANGED_FILES" -gt 10 ]]; then
+  # Not stale by date, but many files changed — still worth a heads-up
+  echo "VDK: Knowledge base was synced ${DAYS_AGO} days ago, but ${CHANGED_FILES} code files changed since then. Consider running the sync skill."
 fi
 
 exit 0

@@ -65,6 +65,11 @@ fi
 
 if [[ -n "$VIOLATIONS" ]]; then
   echo "VDK: ${VIOLATIONS}Use design tokens from DESIGN.md or the project's token system instead. If this is intentional (e.g. a one-off reset), add a comment explaining why." >&2
+
+  # Log for recovery report (PostToolUse will read this and inform the designer)
+  RECOVERY_LOG="/tmp/vdk-blocked-$(printf '%s' "${CLAUDE_PROJECT_DIR:-.}" | tr '/' '_').log"
+  echo "hardcoded-values|$(date +%s)|${FILE_PATH}|${VIOLATIONS}" >> "$RECOVERY_LOG"
+
   exit 2
 fi
 
