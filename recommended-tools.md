@@ -21,6 +21,12 @@ Setup script detects the project and suggests relevant tools from this list.
 | [vitest-skill](https://github.com/jezweb/claude-skills) | Vitest 4.x patterns: mocking, snapshots, in-source testing, workspace config, browser mode. | `claude plugin add jezweb/claude-skills` |
 | [tdd-guard](https://github.com/nizos/tdd-guard) | Blocks implementation without failing tests. Enforces RED-GREEN-REFACTOR. Can be toggled off. | `claude plugin add nizos/tdd-guard` |
 
+## Code Analysis
+
+| Tool | What it does | Install |
+|------|-------------|---------|
+| [graphify](https://github.com/safishamsi/graphify) | AST-based code knowledge graph (tree-sitter + Leiden clustering). Generates accurate import edges, call graphs, community clusters, wiki articles, and interactive HTML graph. Used by VDK onboarding to produce component-graph.md structural data. Up to 71x token reduction vs reading raw files. | `pip install graphifyy && graphify install` |
+
 ## Development Workflow Skills
 
 | Tool | What it does | Install |
@@ -100,3 +106,6 @@ Auto-installed by setup.sh. See CLAUDE.md for when each one fires.
 | **onboarding** | Designer-centric codebase analysis: product overview, entity map, screen inventory, component graph, user flows, visual language. No external tool does this. |
 | **sync** | Vault synchronization with code changes, preserving designer annotations. Unique to our vault approach. |
 | **sync-tokens** | Three-way token reconciliation: Figma Variables ↔ DESIGN.md ↔ Code. Auto-detects direction, shows diff, asks before writing. No external tool bridges all three sources with designer approval flow. |
+| **figma-audit** | Compares a live page or component against a Figma frame: spacing, colors, typography, borders. Reports a structured table of drift with severity (High/Medium/Low) and offers to fix. Use when designer asks "does this match Figma?" or pastes a Figma URL next to a page URL. Requires Figma MCP + Playwright MCP. |
+| **visual-diff** | Before/after screenshot comparison after code changes. Two modes: snapshot (record baseline before a change) and compare (report what shifted after). Use after editing a component when designer asks "what changed?" or "show me before/after". |
+| **kb-lint** | Cross-references knowledge base documents against the codebase to find orphaned components, missing entries, stale references, and cross-document inconsistencies. Triggered automatically when sync-freshness or kb-drift hooks report significant drift. Reports issues in a designer-readable table and offers to fix. |

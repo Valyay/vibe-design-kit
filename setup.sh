@@ -503,6 +503,23 @@ install_global_skill \
   "improve-codebase-architecture" \
   "npx skills add mattpocock/skills --skill improve-codebase-architecture -a claude-code -y -g"
 
+# ── Graphify — AST-accurate component graph ──────────────────
+echo ""
+echo "  Graphify (AST-based code knowledge graph):"
+
+if command -v graphify &>/dev/null; then
+  echo "    ⏭  graphify already installed"
+elif command -v pip3 &>/dev/null || command -v pip &>/dev/null; then
+  PIP_CMD="$(command -v pip3 || command -v pip)"
+  echo "    Installing graphify..."
+  "$PIP_CMD" install graphifyy -q 2>/dev/null \
+    && graphify install 2>/dev/null \
+    && echo "    ✓  graphify (AST analysis + component graph)" \
+    || echo "    ⚠  graphify install failed. Install manually: pip install graphifyy && graphify install"
+else
+  echo "    ⚠  pip not found — install graphify manually: pip install graphifyy && graphify install"
+fi
+
 # ── Project-specific skills (framework-dependent) ────────────
 echo ""
 echo "  Project skills (specific to this project):"

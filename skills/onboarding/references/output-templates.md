@@ -48,11 +48,20 @@ For each screen:
 
 ## component-graph.md
 
-Start with Mermaid `graph TD` showing page → component dependencies.
-Use `subgraph` to group by role (Pages, Layout, Data Display, etc.).
-Color page nodes with `fill:#e0f2fe`.
+> Source: graphify AST analysis (import edges are exact) + manual designer metadata (entity bindings, health, status).
 
-Then detailed composition as a tree:
+Start with Mermaid `graph TD` derived from graphify's import graph:
+- Edges come from `graphify-cache/graph.json` — accurate, not inferred
+- `subgraph` groups come from graphify's community clusters, mapped to design roles (Layout, Navigation, Data Display, Data Input, Feedback, Atoms)
+- Color page nodes with `fill:#e0f2fe`
+
+Note the graphify source at top:
+```markdown
+> Graph edges sourced from graphify AST analysis ([date]). Designer metadata (entity bindings, states, health) added manually.
+> Re-run `graphify analyze` after major refactors to refresh structural data.
+```
+
+Then detailed composition as a tree (from graphify wiki articles if available, otherwise manual):
 ```
 PageName (/route)
 ├── ComponentA
@@ -65,7 +74,7 @@ PageName (/route)
 For each component note: status (active/legacy/deprecated), variants, implemented states
 (loading/error/empty/populated/partial), design issues.
 
-Group by role: Layout, Navigation, Data display, Data input, Feedback, Atoms.
+Group by role matching graphify community clusters.
 
 ## user-flows.md
 
