@@ -57,4 +57,37 @@ elif [[ "$CHANGED_FILES" -gt 10 ]]; then
   echo "VDK: Knowledge base was synced ${DAYS_AGO} days ago, but ${CHANGED_FILES} code files changed since then. Consider running the sync skill."
 fi
 
+# Per-document staleness: read last_synced from each primary document's frontmatter.
+# This is more precise than the single _sync-log.md date — a document can be individually stale
+# even when the overall vault was recently synced.
+KB_DIR="$(dirname "$SYNC_LOG")"
+STALE_DOCS=""
+
+for doc in entity-map component-graph screen-inventory user-flows visual-language product-overview; do
+  DOC_PATH="$KB_DIR/$doc.md"
+  [[ -f "$DOC_PATH" ]] || continue
+
+  # Extract last_synced from YAML frontmatter (between first two --- lines)
+  DOC_DATE=$(awk '/^---$/{n++; if(n==2) exit; next} n==1 && /^last_synced:/' "$DOC_PATH" \
+    | sed 's/last_synced: *//' | tr -d "'" | tr -d '"' | grep -E '^[0-9]{4}-[0-9]{2}-[0-9]{2}$' || true)
+
+  [[ -z "$DOC_DATE" ]] && continue          # null or not yet populated — skip
+  [[ "$DOC_DATE" == "null" ]] && continue
+
+  if date -j -f "%Y-%m-%d" "$DOC_DATE" "+%s" &>/dev/null; then
+    DOC_TS=$(date -j -f "%Y-%m-%d" "$DOC_DATE" "+%s")
+  else
+    DOC_TS=$(date -d "$DOC_DATE" "+%s")
+  fi
+
+  DOC_DAYS=$(( (NOW_TS - DOC_TS) / 86400 ))
+  if [[ "$DOC_DAYS" -gt "$SYNC_STALE_DAYS" ]]; then
+    STALE_DOCS="${STALE_DOCS} ${doc}(${DOC_DAYS}d)"
+  fi
+done
+
+if [[ -n "$STALE_DOCS" ]]; then
+  echo "VDK: Stale KB documents (last_synced > ${SYNC_STALE_DAYS} days):${STALE_DOCS}. Run the sync skill."
+fi
+
 exit 0

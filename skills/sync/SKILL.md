@@ -17,7 +17,18 @@ Detect what changed, update stale documents, and flag conflicts with designer's 
 
 ## Step 1: Detect changes since last sync
 
-Read `_sync-log.md` for the last sync timestamp. Compare against git:
+Each primary KB document carries a `last_synced` date in its YAML frontmatter.
+Read per-document staleness first — a document can be individually stale even when
+the overall vault was recently synced.
+
+```bash
+# Read last_synced from a document's frontmatter
+awk '/^---$/{n++; if(n==2) exit; next} n==1 && /^last_synced:/' entity-map.md \
+  | sed 's/last_synced: *//'
+```
+
+Use the **oldest `last_synced`** across primary documents as the effective sync baseline.
+Fall back to `_sync-log.md` only if frontmatter dates are all `null` (vault pre-dates this feature).
 
 ```bash
 LAST_SYNC=$(grep -m1 '## Sync:' _sync-log.md | sed 's/## Sync: //')
@@ -83,6 +94,20 @@ For each stale document:
   ~ /projects — ProjectCard props changed (added `priority`)
   - /onboarding — route deleted, marking as removed
 ```
+
+**After updating each document, write updated frontmatter:**
+
+```yaml
+last_synced: YYYY-MM-DD          # today's date
+designer_annotations: N          # recount lines starting with "> [Designer]" or "<!-- designer note"
+```
+
+Count `designer_annotations` by scanning the updated document:
+```bash
+grep -cE '^\> \[Designer\]|<!-- designer note' document.md || true
+```
+
+Do not change `title`, `type`, `source_files`, or `generated_by` — those are set by onboarding.
 
 ## Step 5: Update Mermaid diagrams
 

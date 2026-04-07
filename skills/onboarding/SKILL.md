@@ -145,6 +145,51 @@ See `references/design-md-autofill.md` for classification rules and section mapp
 
 If the designer has a Figma file with variables, suggest running `vdk-sync-tokens` after onboarding.
 
+## Step 7c: Write YAML frontmatter to each generated document
+
+After generating each primary document, write its frontmatter with real values.
+Use the actual file paths found in the codebase — not placeholders.
+
+**Field values:**
+
+| Field | Value to write |
+|---|---|
+| `title` | Human-readable name (e.g. "Entity Map") |
+| `type` | Document type slug (e.g. `entity-map`) |
+| `last_synced` | Current date in `YYYY-MM-DD` format |
+| `source_files` | Actual paths found — see table below |
+| `generated_by` | `onboarding` |
+| `designer_annotations` | `0` (fresh document, no annotations yet) |
+
+**source_files by document type:**
+
+| Document | Source files to list |
+|---|---|
+| `product-overview.md` | `README.md`, `package.json`, public-facing pages (`app/page.tsx`, `pages/index.tsx`) |
+| `entity-map.md` | Database schema (`prisma/schema.prisma`, `drizzle/*.ts`), TypeScript types (`src/types/**`, `src/models/**`), API route shapes |
+| `screen-inventory.md` | Route files (`src/app/**/page.tsx`, `src/pages/**/*.tsx`), layout files |
+| `component-graph.md` | Component directories (`src/components/**`, `app/components/**`, `src/ui/**`) |
+| `user-flows.md` | Navigation config, sidebar/menu components, form submit handlers, link targets |
+| `visual-language.md` | CSS files (`*.css`, `*.scss`), Tailwind config (`tailwind.config.*`), theme files (`theme.ts`, `tokens.ts`) |
+
+List only files that actually exist in the project — skip any that aren't present.
+If multiple files match a pattern (e.g. 12 page files), list the directories: `src/app/` rather than every file.
+
+**Example result for entity-map.md:**
+
+```yaml
+---
+title: Entity Map
+type: entity-map
+last_synced: 2024-01-15
+source_files:
+  - prisma/schema.prisma
+  - src/types/index.ts
+generated_by: onboarding
+designer_annotations: 0
+---
+```
+
 ## Step 8: Storybook inventory (if available)
 
 If Storybook is installed: list all stories, screenshot each, note coverage gaps.

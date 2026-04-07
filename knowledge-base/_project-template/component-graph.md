@@ -1,3 +1,12 @@
+---
+title: Component Graph
+type: component-graph
+last_synced: null
+source_files: []
+generated_by: null
+designer_annotations: 0
+---
+
 # Component Graph
 
 > Structural edges sourced from graphify AST analysis. Designer metadata (entity bindings, states, health) added by the onboarding skill.
