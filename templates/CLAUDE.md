@@ -51,6 +51,7 @@ the designer doesn't need to ask for them.
 | Designer mentions Figma tokens, token sync, or token drift | Run `vdk-sync-tokens` skill |
 | Designer pastes a Figma URL and asks about tokens/variables | Run `vdk-sync-tokens` skill |
 | Designer pastes a Figma URL and asks "does this match?", "check the implementation", "how far are we from the mockup?" | Run `vdk-figma-audit` skill |
+| Designer provided a Figma URL at the start of a task **and** you just finished implementing the UI | Automatically run `vdk-figma-audit` — do not wait to be asked |
 | After modifying a component — designer asks "what changed?", "did anything shift?", "show me before/after" | Run `vdk-visual-diff` skill |
 | After code changes to token files (CSS vars, Tailwind config, theme) | Suggest running `vdk-sync-tokens` |
 | Task or brief has unclear scope, missing details, or conflicting signals | Run `/grill-me` to resolve all ambiguities **before** starting implementation |
