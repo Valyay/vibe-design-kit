@@ -792,12 +792,133 @@ echo "  Recording quality baseline..."
 echo "  ✓  Baseline saved: $BASELINE_DIR/quality-snapshot.md"
 echo ""
 
+# ── Health check ─────────────────────────────────────────
+
+echo ""
+echo "▸ Setup health check"
+echo ""
+
+HEALTH_ISSUES=0
+
+# ── Helper: print one check result ──
+# Usage: health_check_tool <label> <description> <install_cmd>
+#   Call with empty install_cmd if already confirmed OK.
+health_ok()   { printf "    ✓  %-24s %s\n" "$1" "$2"; }
+health_warn() {
+  printf "    ✗  %-24s %s\n" "$1" "$2"
+  echo   "       Install: $3"
+  HEALTH_ISSUES=$((HEALTH_ISSUES + 1))
+}
+health_info() { printf "    ℹ  %-24s %s\n" "$1" "$2"; }
+
+# ── Core tools ───────────────────────────────────────────
+echo "  Core tools:"
+
+if command -v python3 &>/dev/null; then
+  PY_VER=$(python3 --version 2>&1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
+  health_ok "python3 ${PY_VER}" "hooks require this"
+else
+  health_warn "python3" "required for enforcement hooks" \
+    "brew install python3   (macOS) | apt install python3   (Linux)"
+fi
+
+if command -v node &>/dev/null; then
+  NODE_VER=$(node --version 2>/dev/null | tr -d 'v' || true)
+  health_ok "node ${NODE_VER}" "skills + npx"
+else
+  health_warn "node" "required for skills and npx" \
+    "brew install node   (macOS) | https://nodejs.org"
+fi
+
+if command -v claude &>/dev/null; then
+  CLAUDE_VER=$(claude --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1 || echo "")
+  health_ok "claude ${CLAUDE_VER}" "Claude Code CLI"
+else
+  health_warn "claude" "required to run skills and MCPs" \
+    "npm install -g @anthropic-ai/claude-code"
+fi
+
+if command -v graphify &>/dev/null; then
+  health_ok "graphify" "AST code graph (component-graph.md)"
+else
+  health_warn "graphify" "onboarding will fall back to manual analysis" \
+    "pip install graphifyy && graphify install"
+fi
+
+echo ""
+
+# ── MCP servers ──────────────────────────────────────────
+echo "  MCP servers:"
+
+MCP_LIST=""
+if command -v claude &>/dev/null; then
+  MCP_LIST=$(claude mcp list 2>/dev/null || true)
+fi
+
+check_mcp() {
+  local mcp_name="$1"    # name as shown in `claude mcp list`
+  local label="$2"        # display label
+  local purpose="$3"      # what it enables
+  local install_cmd="$4"  # command to install
+
+  if echo "$MCP_LIST" | grep -q "^${mcp_name}:"; then
+    health_ok "$label" "$purpose"
+  else
+    health_warn "$label" "$purpose" "$install_cmd"
+  fi
+}
+
+check_mcp "playwright" \
+  "Playwright MCP" \
+  "visual-diff, figma-audit, screenshots" \
+  "claude mcp add playwright -- npx @playwright/mcp@latest"
+
+check_mcp "a11y-accessibility" \
+  "A11y MCP" \
+  "accessibility checks on components" \
+  "claude mcp add a11y-accessibility -- npx -y a11y-mcp-server"
+
+check_mcp "obsidian" \
+  "MCPVault" \
+  "vault ↔ Claude Code (read/write knowledge base)" \
+  "claude mcp add obsidian -- npx @bitbonsai/mcpvault@latest \"$KB_DIR\""
+
+if [[ -n "${STORYBOOK_FOUND:-}" ]]; then
+  check_mcp "storybook" \
+    "Storybook MCP" \
+    "component stories, live state screenshots" \
+    "npx storybook@latest add @storybook/addon-mcp"
+fi
+
+# Figma MCP is managed through Claude Code UI, not CLI
+if echo "$MCP_LIST" | grep -qi "figma"; then
+  health_ok "Figma MCP" "figma-audit, sync-tokens, design context"
+else
+  health_info "Figma MCP" "connect in Claude Code → Settings → Integrations → Figma"
+fi
+
+echo ""
+
+# ── Summary ──────────────────────────────────────────────
+if [[ $HEALTH_ISSUES -eq 0 ]]; then
+  echo "  ✓  All checks passed. VDK is fully configured."
+else
+  echo "  ✗  ${HEALTH_ISSUES} issue(s) found — run the install commands above."
+  echo "     Hooks will be degraded until python3 is available."
+  echo "     MCPs can be added any time; re-run this script to verify."
+fi
+
+echo ""
+
 # ── Done ─────────────────────────────────────────────────
 
 echo ""
 echo "  Setup complete!"
 echo ""
 echo "  Next steps:"
+if [[ $HEALTH_ISSUES -gt 0 ]]; then
+  echo "  0. Fix the ${HEALTH_ISSUES} issue(s) shown above"
+fi
 echo "  1. Open Claude Code: cd $TARGET_REPO && claude"
 echo "  2. Run onboarding — it will auto-fill DESIGN.md from your code"
 echo "  3. Review DESIGN.md: approve [auto-filled], resolve [inconsistent]"
