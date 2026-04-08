@@ -357,15 +357,15 @@ else
   fail "check-wikilinks.sh is not executable"
 fi
 
-# ── T21: settings.json includes check-wikilinks hook ──────────────────────
+# ── T21: settings.json includes session-report (unified SessionStart hook) ─
 
 echo ""
-echo "T21: settings.json includes check-wikilinks SessionStart hook"
+echo "T21: settings.json includes session-report.sh SessionStart hook"
 
-if grep -q "check-wikilinks.sh" "$ROOT/templates/settings.json"; then
-  ok "check-wikilinks.sh registered in settings.json"
+if grep -q "session-report.sh" "$ROOT/templates/settings.json"; then
+  ok "session-report.sh registered in settings.json"
 else
-  fail "check-wikilinks.sh missing from settings.json"
+  fail "session-report.sh missing from settings.json (unified hook replaced check-wikilinks + check-sync-freshness)"
 fi
 
 # ── T22: CLAUDE.md documents KB link validation ───────────────────────────
@@ -377,6 +377,55 @@ if grep -q "KB link" "$ROOT/templates/CLAUDE.md" || grep -q "wikilink" "$ROOT/te
   ok "KB link validation documented in CLAUDE.md"
 else
   fail "KB link validation missing from CLAUDE.md"
+fi
+
+# ── T23–T26: check-e2e-test-exists.sh ─────────────────────────────────────
+
+E2E_HOOK="$ROOT/hooks/check-e2e-test-exists.sh"
+
+echo ""
+echo "T23: check-e2e-test-exists.sh is executable"
+if [[ -x "$E2E_HOOK" ]]; then
+  ok "check-e2e-test-exists.sh is executable"
+else
+  fail "check-e2e-test-exists.sh is not executable"
+fi
+
+echo ""
+echo "T24: blocks new component when no e2e spec exists"
+# Use Modal.tsx — not pre-created by KB-drift setup fixtures (Button.tsx is)
+INPUT='{"tool_input":{"file_path":"'"$TEST_DIR"'/src/components/Modal.tsx"}}'
+OUTPUT=$(echo "$INPUT" | CLAUDE_PROJECT_DIR="$TEST_DIR" bash "$E2E_HOOK" 2>&1 || true)
+if echo "$OUTPUT" | grep -q "ACTION REQUIRED"; then
+  ok "Blocked: no e2e spec for Modal.tsx"
+else
+  fail "Expected block, got: $OUTPUT"
+fi
+
+echo ""
+echo "T25: allows component when e2e spec exists"
+mkdir -p "$TEST_DIR/e2e"
+cat > "$TEST_DIR/e2e/modal.spec.ts" << 'EOF'
+import { test } from '@playwright/test';
+test('modal renders', async ({ page }) => {});
+EOF
+INPUT='{"tool_input":{"file_path":"'"$TEST_DIR"'/src/components/Modal.tsx"}}'
+OUTPUT=$(echo "$INPUT" | CLAUDE_PROJECT_DIR="$TEST_DIR" bash "$E2E_HOOK" 2>&1 || true)
+if ! echo "$OUTPUT" | grep -q "ACTION REQUIRED"; then
+  ok "Allowed: e2e/modal.spec.ts exists for Modal.tsx"
+else
+  fail "Should have allowed write, got: $OUTPUT"
+fi
+
+echo ""
+echo "T26: skips existing component files (Edit scenario)"
+touch "$TEST_DIR/src/components/Modal.tsx"
+INPUT='{"tool_input":{"file_path":"'"$TEST_DIR"'/src/components/Modal.tsx"}}'
+OUTPUT=$(echo "$INPUT" | CLAUDE_PROJECT_DIR="$TEST_DIR" bash "$E2E_HOOK" 2>&1 || true)
+if ! echo "$OUTPUT" | grep -q "ACTION REQUIRED"; then
+  ok "Skipped: existing file is not blocked"
+else
+  fail "Should skip existing files, got: $OUTPUT"
 fi
 
 # ── Cleanup ─────────────────────────────────────────────────────────────────

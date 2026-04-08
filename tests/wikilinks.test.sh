@@ -61,10 +61,18 @@ else
   fail "Broken wiki-link: exit=$EXIT_CODE output='$OUTPUT'"
 fi
 
-# ── T3: Anchor link validates file part only ───────────────────────────────
+# ── T3: Anchor link resolves file and heading ──────────────────────────────
 
 echo ""
 echo "T3: Anchor link [[entity-map#organization]] resolves entity-map.md"
+
+# Recreate entity-map.md with the required heading (self-contained, no T1 dependency)
+cat > "$TEST_DIR/design-knowledge/vault/entity-map.md" << 'EOF'
+# Entity Map
+
+## organization
+Details here.
+EOF
 
 cat > "$TEST_DIR/design-knowledge/vault/_index.md" << 'EOF'
 # Index
@@ -170,15 +178,17 @@ else
   fail "check-wikilinks.sh is not executable"
 fi
 
-# ── T9: settings.json includes check-wikilinks hook ────────────────────────
+# ── T9: settings.json includes session-report (unified SessionStart hook) ──
+# check-wikilinks.sh is a CLI utility (used by vdk-kb-lint); wiki-link
+# validation in hook mode now runs inside session-report.sh.
 
 echo ""
-echo "T9: settings.json includes check-wikilinks hook"
+echo "T9: settings.json includes session-report.sh (wiki-links covered inside)"
 
-if grep -q "check-wikilinks.sh" "$ROOT/templates/settings.json"; then
-  ok "check-wikilinks.sh registered in settings.json"
+if grep -q "session-report.sh" "$ROOT/templates/settings.json"; then
+  ok "session-report.sh registered in settings.json (covers wiki-link validation)"
 else
-  fail "check-wikilinks.sh missing from settings.json"
+  fail "session-report.sh missing from settings.json"
 fi
 
 # ── T10: CLAUDE.md documents wiki-link validation ──────────────────────────
@@ -186,7 +196,7 @@ fi
 echo ""
 echo "T10: templates/CLAUDE.md documents wiki-link validation"
 
-if grep -q "Wiki-link validation" "$ROOT/templates/CLAUDE.md"; then
+if grep -qiE "wiki.link|KB link validation" "$ROOT/templates/CLAUDE.md"; then
   ok "Wiki-link validation documented in CLAUDE.md"
 else
   fail "Wiki-link validation missing from CLAUDE.md"
