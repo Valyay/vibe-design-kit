@@ -1,6 +1,6 @@
 ---
 name: kb-lint
-description: Cross-reference knowledge base documents against the codebase to find inconsistencies, orphaned references, missing entries, and stale content. Use when sync-freshness reports drift, after major refactors, or periodically to keep the knowledge base accurate. Reports issues in a designer-readable table and offers to fix them.
+description: Cross-reference knowledge base documents against the codebase to find inconsistencies, orphaned references, missing entries, and stale content. Use when docs feel out of date, documentation doesn't match code, after major refactors, or periodically to keep the knowledge base accurate. Reports issues in a designer-readable table and offers to fix them.
 ---
 
 # KB Lint Skill
@@ -9,9 +9,8 @@ Cross-reference knowledge base documents against the codebase. Find what drifted
 
 ## When to use
 
-- `check-sync-freshness.sh` reports many changed files since last sync
+- Designer says "docs feel out of date", "documentation doesn't match code", "is the KB accurate?", "audit the docs", "clean up the vault"
 - `check-kb-drift.sh` fired multiple reminders in the current session
-- Designer says "is the knowledge base accurate?", "audit the docs", "clean up the vault"
 - After a major refactor, migration, or component library overhaul
 - Periodically (monthly) as a health check
 
@@ -44,226 +43,66 @@ If not found, tell the designer: "No knowledge base found. Run the onboarding sk
 
 Read `_index.md` to understand the current KB scope.
 
-## Step 2: Component graph audit
+## Step 2: Audit pattern (apply to all documents)
 
-Cross-reference `component-graph.md` against the actual codebase.
+For each KB document, run three checks:
 
-**Find orphans** — components listed in KB but missing in code:
+| Check | What it means | Action |
+|-------|--------------|--------|
+| **Orphans** | Item listed in KB but not found in code | Mark as orphan — likely renamed or deleted |
+| **Missing** | Item exists in code but not in KB | Candidate to add |
+| **Drift** | Item exists in both but details differ | Flag the specific fields/values that differ |
 
-```
-For each component name in component-graph.md:
-  → Search codebase for the file or export
-  → If not found: orphan (renamed? deleted?)
-```
+**Executable example — component orphan detection:**
 
-**Find missing** — components in code but not in KB:
+```bash
+KB_DOC="path/to/design-knowledge/component-graph.md"
+SRC_DIR="src/components"
 
-```
-For each component file in src/components/ (or equivalent):
-  → Search component-graph.md for the component name
-  → If not found: missing from KB
-```
+# Components listed in KB (PascalCase identifiers)
+grep -oE '\b[A-Z][a-zA-Z]+\b' "$KB_DOC" | sort -u > /tmp/kb-components.txt
 
-**Check relationships** — import graph vs KB dependency diagram:
+# Components exported from code
+grep -rh --include="*.tsx" --include="*.jsx" \
+  -E "^export (default |const |function |class )[A-Z]" "$SRC_DIR" \
+  | grep -oE '\b[A-Z][a-zA-Z]+\b' | sort -u > /tmp/code-components.txt
 
-```
-For each "A uses B" relationship in the Mermaid diagram:
-  → Verify A actually imports B in code
-  → If not: stale relationship
-```
+echo "=== Orphans (in KB, not in code) ==="
+comm -23 /tmp/kb-components.txt /tmp/code-components.txt
 
-## Step 3: Entity map audit
-
-Cross-reference `entity-map.md` against types, models, and schemas.
-
-**Find orphans** — entities in KB but not in code:
-
-```
-For each entity in entity-map.md:
-  → Search for matching TypeScript type, interface, schema, or model
-  → If not found: orphan
+echo "=== Missing (in code, not in KB) ==="
+comm -13 /tmp/kb-components.txt /tmp/code-components.txt
 ```
 
-**Find missing** — types/models in code but not in KB:
+Apply the same orphan/missing/drift logic to each document below.
 
-```
-For each major type (skip utility types like Props, Params):
-  → Search entity-map.md for it
-  → If not found and it has >3 fields: probably worth adding
-```
+## Step 3: Per-document audit targets
 
-**Check fields** — do documented fields match the actual type:
+See [`references/audit-targets.md`](references/audit-targets.md) for the full table of KB documents, code sources, and drift checks.
 
-```
-For each entity with documented fields:
-  → Compare against the type definition
-  → Flag: added fields, removed fields, type changes
-```
+## Step 4: Cross-document consistency
 
-## Step 4: Screen inventory audit
+Check that documents agree with each other:
 
-Cross-reference `screen-inventory.md` against routes and pages.
+| Pair | What to verify |
+|------|---------------|
+| Entity ↔ Component | For each screen that uses a data-displaying component (DataTable, List, Card with fields), check whether the entity it shows (User, Task, Project, etc.) exists in `entity-map.md`. Look at the screen's purpose and component list to infer which entity is displayed. Flag if the entity is missing or if field names referenced in screen descriptions don't match `entity-map.md`. |
+| Screen ↔ Flow | Every screen named in `user-flows.md` appears in `screen-inventory.md` (and vice versa) |
+| Component ↔ Screen | Every component mentioned in a screen description exists in `component-graph.md` |
 
-**Find orphans** — screens in KB but no matching route:
+## Step 5: Index audit
 
-```
-For each screen in screen-inventory.md:
-  → Search for the route in the codebase (app/ or pages/ directory)
-  → If not found: orphan
-```
+Check that `_index.md` is consistent with the actual KB contents:
 
-**Find missing** — routes in code but not in KB:
+- **Completeness** — every primary doc (`component-graph.md`, `entity-map.md`, etc.) is listed; add any missing
+- **Summaries** — one-line descriptions match each doc's current heading and purpose; flag misleading ones
+- **Dates** — last-updated dates match `_sync-log.md` entries; correct any that are wrong
 
-```
-For each page/route file:
-  → Search screen-inventory.md for the URL path
-  → If not found: missing from KB
-```
+## Step 6: Report
 
-**Check screenshots** — are they current:
+Present findings (including _index.md issues from Step 5) as a structured report to the designer.
 
-```
-For each screenshot referenced in screen-inventory.md:
-  → Check if the file exists in screenshots/
-  → Check last modified date vs the route file's last change
-  → If screenshot is older: potentially stale
-```
-
-## Step 5: User flows audit
-
-Cross-reference `user-flows.md` against routes and interactions.
-
-**Check flow steps** — do referenced screens still exist:
-
-```
-For each step in a flow diagram:
-  → If it names a screen: verify it exists in screen-inventory.md AND code
-  → If it names a component: verify it exists in component-graph.md AND code
-```
-
-**Check flow completeness** — are there obvious gaps:
-
-```
-For each route that handles user input (forms, buttons, API calls):
-  → Is it part of at least one documented flow?
-  → If not: potentially undocumented user flow
-```
-
-## Step 6: Visual language audit
-
-Cross-reference `visual-language.md` against `token-audit.md` and actual code.
-
-**Check documented tokens** — do they match reality:
-
-```
-For each token mentioned in visual-language.md:
-  → Verify it exists in the token system (CSS vars, Tailwind config, etc.)
-  → If value differs: drift
-```
-
-**Check descriptions** — do pattern descriptions match the code:
-
-```
-For each pattern described (e.g. "cards have 8px radius"):
-  → Sample 2-3 actual components that should follow this
-  → If they don't: either the pattern or the components drifted
-```
-
-## Step 7: Cross-document consistency
-
-Check that documents agree with each other.
-
-**Entity ↔ Component** — entities referenced by components should exist in entity-map:
-
-```
-For each component in component-graph.md that displays an entity:
-  → Verify the entity appears in entity-map.md
-  → Verify field names match
-```
-
-**Screen ↔ Flow** — screens in flows should exist in screen-inventory:
-
-```
-For each screen referenced in user-flows.md:
-  → Verify it appears in screen-inventory.md
-```
-
-**Component ↔ Screen** — components listed on screens should exist in component-graph:
-
-```
-For each component mentioned in a screen description:
-  → Verify it appears in component-graph.md
-```
-
-## Step 8: Index audit
-
-Check that `_index.md` is consistent with the actual KB contents.
-
-**Check completeness** — all primary docs listed:
-
-```
-For each primary doc (component-graph.md, entity-map.md, etc.):
-  → Verify it appears in _index.md
-  → If missing: add it
-```
-
-**Check summaries** — one-line descriptions match doc contents:
-
-```
-For each entry in _index.md:
-  → Compare summary against actual doc heading/purpose
-  → If summary is misleading or outdated: flag
-```
-
-**Check last-updated dates** — if _index.md includes dates:
-
-```
-For each date in _index.md:
-  → Compare against _sync-log.md entries
-  → If date is wrong: update
-```
-
-## Step 9: Report
-
-Present findings (including _index.md issues from Step 8) as a structured report to the designer.
-
-### Report format
-
-```markdown
-## Knowledge Base Health Report
-
-**Checked on:** YYYY-MM-DD
-**KB last synced:** YYYY-MM-DD (from _sync-log.md)
-**Code changes since sync:** N files
-
-### Summary
-
-| Check | OK | Issues | 
-|-------|-----|--------|
-| Components | 12 | 3 orphans, 2 missing |
-| Entities | 8 | 1 orphan |
-| Screens | 6 | 0 |
-| Flows | 4 | 1 stale reference |
-| Visual language | — | 2 drifted tokens |
-| Cross-document | — | 1 inconsistency |
-
-### Issues
-
-#### Components
-| Issue | Name | Details | Suggested fix |
-|-------|------|---------|---------------|
-| Orphan | `OldCard` | Listed in component-graph.md but not found in code | Remove from KB |
-| Missing | `PricingTable` | Found in src/components/ but not in KB | Add to component-graph.md |
-| Stale | `Button → Icon` | Import removed in code, still in Mermaid diagram | Update diagram |
-
-#### Entities
-...
-
-#### Cross-document
-| Doc A | Doc B | Inconsistency |
-|-------|-------|---------------|
-| entity-map.md calls it "Project" | component-graph.md calls it "Campaign" | Align naming |
-```
+Use the template from [`references/report-template.md`](references/report-template.md).
 
 ### After the report
 
@@ -276,7 +115,7 @@ Ask the designer:
 
 Default recommendation: option 2.
 
-## Step 10: Fix and log
+## Step 7: Fix and log
 
 For each fix applied:
 - Update the relevant KB document

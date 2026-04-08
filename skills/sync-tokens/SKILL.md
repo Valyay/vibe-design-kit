@@ -54,6 +54,8 @@ Compare tokens across all available sources. Assign each token a status:
 | `+` | New | Exists in one source only |
 | `−` | Removed | Missing from a source where expected |
 
+**These exact symbols are mandatory in the report — never substitute words like "OK", "match", "added", or "missing".**
+
 See [token-sources.md](token-sources.md) for value equivalence rules (color formats, rem/px conversion, Figma rounding tolerance).
 
 ---
@@ -87,7 +89,7 @@ Sources found:
   DESIGN.md: ✓ parsed (N tokens with values)
   Code:      ✓ scanned (N tokens in path/to/file.css)
 
-Overview:
+Overview (all 5 rows always present, use 0 if none):
   ✓  15 tokens in sync
   ≈   2 tokens equivalent (format differs)
   ⚠   3 tokens drifted
@@ -109,19 +111,26 @@ Overview:
 ─── Format differences (no action needed) ─
 
   --color-error  Figma: rgba(239,68,68,1)  Code: #EF4444  → Same color ✓
+
+─────────────────────────────────────────
+Want me to log this sync to `_sync-log.md`?
 ```
+
+**The `_sync-log.md` offer is a required closing line of the report — always include it, even before any changes are applied.**
 
 ---
 
 ## Step 5: Ask what to do
 
-Ask the designer ONE question at a time.
+**Protocol: after presenting the report, send ONE question and stop. Do not add code snippets to the same message. Do not list multiple decisions. Wait for the designer's reply, then ask the next question.**
 
-**Drifted tokens**: "**--color-primary**: Figma says #2563EB, code says #3B82F6. Which one should it be?"
+Work through issues in this order: drifted → new → removed. One token per message.
 
-**New tokens**: "Figma has 2 tokens not in code yet. Want me to add them? I'll show the snippet first."
+- Drifted: "**--color-primary**: Figma says #2563EB, code says #3B82F6. Which one should it be?"
+- New: "Figma has `--color-brand-secondary: #7C3AED` not in code yet. Want me to add it? I'll show the snippet first."
+- Removed: "Code has `--color-surface-hover` but it's gone from Figma. Keep or remove?"
 
-**Removed tokens**: "Code has `--color-surface-hover` but it's gone from Figma. Keep or remove?"
+After the designer answers, ask about the next token. Only show a code snippet once the designer has confirmed what to do with that specific token.
 
 ---
 
@@ -143,18 +152,18 @@ Always include the target file path: "Here's the CSS to add to `src/styles/globa
 
 ## Step 7: Update audit and log
 
-After changes are applied:
+After presenting the report (whether or not any changes were applied):
 
-1. **token-audit.md** — update token counts, show improvement ("Tokenized: 85% → 89%").
-   Ask: "Want me to update token-audit.md?"
-
-2. **_sync-log.md** — offer a log entry summarizing what changed:
+1. **_sync-log.md** — always offer a log entry, even if no changes were made:
    ```
    ## Token sync: YYYY-MM-DD HH:MM
    Sources: Figma (18 vars), Code (21 tokens), DESIGN.md (24 tokens)
    Added: 2 from Figma, Resolved: 1 drift, Skipped: 1 code-only kept
    ```
-   Ask: "Want me to log this sync?"
+   Ask: "Want me to log this sync to `_sync-log.md`?"
+
+2. **token-audit.md** — if changes were applied, offer to update token counts:
+   "Want me to update token-audit.md? (Tokenized: 85% → 89%)"
 
 ---
 
