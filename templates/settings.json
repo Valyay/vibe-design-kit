@@ -8,22 +8,11 @@
       "Bash(git diff*)",
       "Bash(git log*)",
       "Bash(git branch*)",
-      "Bash(npm run *)",
-      "Bash(npm test*)",
-      "Bash(pnpm run *)",
-      "Bash(pnpm test*)",
-      "Bash(yarn run *)",
-      "Bash(yarn test*)",
-      "Bash(bun run *)",
-      "Bash(bun test*)",
-      "Bash(npx playwright*)",
-      "Bash(npx vitest*)",
-      "Bash(npx storybook*)",
-      "Bash(npx biome*)",
-      "Bash(npx tsc*)",
-      "Bash(npx skills*)",
-      "Bash(npx eslint*)",
-      "Bash(npx prettier*)"
+      "Bash(npm *)",
+      "Bash(pnpm *)",
+      "Bash(yarn *)",
+      "Bash(bun *)",
+      "Bash(npx *)"
     ]
   },
   "hooks": {
@@ -144,12 +133,21 @@
             "statusMessage": "Checking knowledge base drift..."
           }
         ]
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/check-mermaid-validity.sh",
+            "timeout": 10,
+            "statusMessage": "Validating Mermaid diagrams..."
+          }
+        ]
       }
     ]
   },
   "plugins": [
-    "obra/superpowers",
-    "tirth8205/code-review-graph",
-    "nizos/tdd-guard"
+    "obra/superpowers"
   ]
 }
