@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# VDK Hook: Run lint + typecheck after code edits
+# VDK Hook: Run lint, typecheck, and related tests after code edits
 # Trigger: PostToolUse on Edit|Write (async)
 # Enforces: "Quality gates" rule from CLAUDE.md
 set -euo pipefail
@@ -106,8 +106,56 @@ run_typecheck() {
   fi
 }
 
+# Detect and run tests for the edited file
+run_tests() {
+  local pkg="$PROJECT_DIR/package.json"
+  local dir; dir=$(dirname "$FILE_PATH")
+  local name_no_ext; name_no_ext=$(basename "$FILE_PATH" | sed 's/\.[^.]*$//')
+
+  # Find the matching test file (.test. and .spec. conventions)
+  local test_file=""
+  for candidate in \
+    "${dir}/${name_no_ext}.test.ts" \
+    "${dir}/${name_no_ext}.test.tsx" \
+    "${dir}/${name_no_ext}.test.js" \
+    "${dir}/${name_no_ext}.test.jsx" \
+    "${dir}/${name_no_ext}.spec.ts" \
+    "${dir}/${name_no_ext}.spec.tsx" \
+    "${dir}/${name_no_ext}.spec.js" \
+    "${dir}/${name_no_ext}.spec.jsx" \
+    "${dir}/__tests__/${name_no_ext}.test.ts" \
+    "${dir}/__tests__/${name_no_ext}.test.tsx" \
+    "${dir}/__tests__/${name_no_ext}.test.js" \
+    "${dir}/__tests__/${name_no_ext}.spec.ts" \
+    "${dir}/__tests__/${name_no_ext}.spec.tsx" \
+    "${dir}/__tests__/${name_no_ext}.spec.js"; do
+    if [[ -f "$candidate" ]]; then
+      test_file="$candidate"
+      break
+    fi
+  done
+
+  [[ -n "$test_file" ]] || return 0
+
+  local output
+  if grep -qE '"vitest"' "$pkg" 2>/dev/null; then
+    if output=$(cd "$PROJECT_DIR" && npx vitest run "$test_file" 2>&1); then
+      RESULTS="${RESULTS}Tests: passed\n"
+    else
+      RESULTS="${RESULTS}Tests: failed\n${output}\n"
+    fi
+  elif grep -qE '"jest"' "$pkg" 2>/dev/null; then
+    if output=$(cd "$PROJECT_DIR" && npx jest --passWithNoTests "$test_file" 2>&1); then
+      RESULTS="${RESULTS}Tests: passed\n"
+    else
+      RESULTS="${RESULTS}Tests: failed\n${output}\n"
+    fi
+  fi
+}
+
 run_lint
 run_typecheck
+run_tests
 
 if [[ -n "$RESULTS" ]]; then
   echo -e "VDK quality check for $(basename "$FILE_PATH"):\n$RESULTS"
