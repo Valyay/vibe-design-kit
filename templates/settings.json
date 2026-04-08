@@ -63,6 +63,17 @@
         ]
       },
       {
+        "matcher": "Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/check-e2e-test-exists.sh",
+            "timeout": 10,
+            "statusMessage": "Checking e2e test coverage..."
+          }
+        ]
+      },
+      {
         "matcher": "Edit|Write",
         "hooks": [
           {
@@ -95,6 +106,18 @@
             "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/check-story-exists.sh",
             "timeout": 10,
             "statusMessage": "Checking Storybook coverage..."
+          }
+        ]
+      },
+      {
+        "matcher": "Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/check-a11y.sh",
+            "timeout": 10,
+            "async": true,
+            "statusMessage": "Checking accessibility coverage..."
           }
         ]
       },
