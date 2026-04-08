@@ -87,6 +87,15 @@ pkg_add() {
   esac
 }
 
+pkg_dev_add() {
+  case "$PKG_MANAGER" in
+    pnpm) pnpm add -D "$@" ;;
+    yarn) yarn add -D "$@" ;;
+    bun)  bun add -d "$@" ;;
+    npm)  npm install --save-dev "$@" ;;
+  esac
+}
+
 echo ""
 echo "  Vibe Design Kit — Brownfield Setup"
 echo "  Target:  $TARGET_REPO"
@@ -356,7 +365,17 @@ else
   elif has_dependency "cypress" || [[ -f "$TARGET_REPO/cypress.config.ts" ]] || [[ -f "$TARGET_REPO/cypress.config.js" ]]; then
     E2E_FOUND="cypress"; echo "    ✓  Cypress"
   else
-    echo "    ✗  None found"
+    echo "    ⚠  Playwright not found — installing (required for visual testing)..."
+    if (cd "$TARGET_REPO" && pkg_dev_add @playwright/test 2>/dev/null); then
+      E2E_FOUND="playwright"
+      echo "    ✓  @playwright/test installed"
+      echo "    Installing browser binaries..."
+      (cd "$TARGET_REPO" && npx playwright install --with-deps chromium 2>/dev/null) \
+        && echo "    ✓  Chromium browser installed" \
+        || echo "    ⚠  Browser install failed — run manually: npx playwright install chromium"
+    else
+      echo "    ✗  Playwright install failed — add manually: ${PKG_MANAGER} add -D @playwright/test"
+    fi
   fi
 
   # ── Pre-commit hooks detection ────────────────────────
@@ -379,7 +398,7 @@ else
   [[ -z "$FORMATTER_FOUND" ]]   && MISSING_QUALITY+=("formatter")
   [[ -z "$TYPECHECKER_FOUND" ]] && MISSING_QUALITY+=("typescript")
   [[ -z "$TEST_RUNNER_FOUND" ]] && MISSING_QUALITY+=("test-runner")
-  [[ -z "$E2E_FOUND" ]]         && MISSING_QUALITY+=("e2e")
+  [[ -z "$E2E_FOUND" ]]         && MISSING_QUALITY+=("e2e (Playwright install failed)")
   [[ -z "$HOOKS_FOUND" ]]       && MISSING_QUALITY+=("hooks")
 
   if [[ ${#MISSING_QUALITY[@]} -gt 0 ]]; then
@@ -399,7 +418,10 @@ if has_dependency "storybook" || has_dependency "@storybook/react" || [[ -d "$TA
   echo "  ✓  Storybook detected"
   echo "  Onboarding will use Storybook for component screenshots"
 else
-  echo "  ✗  Storybook not found — onboarding will screenshot full pages instead"
+  echo "  ⚠  Storybook not found — installing (required for component documentation)..."
+  (cd "$TARGET_REPO" && npx storybook@latest init --yes 2>/dev/null) \
+    && echo "  ✓  Storybook installed" \
+    || echo "  ✗  Storybook install failed — add manually: npx storybook@latest init"
 fi
 
 echo ""
@@ -507,6 +529,19 @@ install_global_skill \
   "obsidian-flavored-markdown (callouts, embeds, wikilinks, properties)" \
   "obsidian-flavored-markdown" \
   "npx skills add kepano/obsidian-skills --skill obsidian-flavored-markdown -a claude-code -y -g"
+
+# ── TDD Guard — automated TDD enforcement ────────────────────
+echo ""
+echo "  TDD Guard (blocks implementation without failing tests):"
+
+if command -v tdd-guard &>/dev/null; then
+  echo "    ⏭  tdd-guard already installed"
+else
+  echo "    Installing tdd-guard..."
+  npm install -g tdd-guard 2>/dev/null \
+    && echo "    ✓  tdd-guard (run /tdd-guard:setup inside Claude Code to finish)" \
+    || echo "    ⚠  tdd-guard install failed. Install manually: npm install -g tdd-guard"
+fi
 
 # ── Graphify — AST-accurate component graph ──────────────────
 echo ""
@@ -920,8 +955,10 @@ if [[ $HEALTH_ISSUES -gt 0 ]]; then
   echo "  0. Fix the ${HEALTH_ISSUES} issue(s) shown above"
 fi
 echo "  1. Open Claude Code: cd $TARGET_REPO && claude"
-echo "  2. Run onboarding — it will auto-fill DESIGN.md from your code"
-echo "  3. Review DESIGN.md: approve [auto-filled], resolve [inconsistent]"
-echo "  4. Knowledge base: $KB_DIR"
+echo "  2. In Claude Code chat, type: /tdd-guard:setup"
+echo "     (configures test reporters so Claude enforces TDD automatically)"
+echo "  3. Run onboarding — it will auto-fill DESIGN.md from your code"
+echo "  4. Review DESIGN.md: approve [auto-filled], resolve [inconsistent]"
+echo "  5. Knowledge base: $KB_DIR"
 echo "     (open with Obsidian, VS Code, or any editor)"
 echo ""
