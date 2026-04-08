@@ -10,7 +10,10 @@ if ! command -v python3 &>/dev/null; then
 fi
 
 INPUT=$(cat)
-FILE_PATH=$(echo "$INPUT" | python3 -c "import json,sys; d=json.load(sys.stdin); print(d.get('tool_input',{}).get('file_path',''))" || true)
+if ! FILE_PATH=$(echo "$INPUT" | python3 -c "import json,sys; d=json.load(sys.stdin); print(d.get('tool_input',{}).get('file_path',''))" 2>/dev/null); then
+  echo "VDK ERROR: check-e2e-test-exists failed to parse hook input — blocking as precaution" >&2
+  exit 2
+fi
 
 # Only check component files
 case "$FILE_PATH" in

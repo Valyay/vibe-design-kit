@@ -5,6 +5,7 @@
 set -euo pipefail
 
 if ! command -v python3 &>/dev/null; then
+  echo "VDK: python3 is required for check-a11y — accessibility assertion check skipped" >&2
   exit 0
 fi
 
