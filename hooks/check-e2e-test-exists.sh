@@ -5,7 +5,8 @@
 set -euo pipefail
 
 if ! command -v python3 &>/dev/null; then
-  exit 0
+  echo "VDK ERROR: python3 is required for check-e2e-test-exists — install python3 to enable TDD enforcement" >&2
+  exit 2
 fi
 
 INPUT=$(cat)

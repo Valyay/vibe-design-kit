@@ -5,12 +5,15 @@
 set -euo pipefail
 
 if ! command -v python3 &>/dev/null; then
-  echo "VDK: python3 is required for enforcement hooks" >&2
-  exit 0
+  echo "VDK ERROR: python3 is required for check-hardcoded-values — install python3 to enable token enforcement" >&2
+  exit 2
 fi
 
 INPUT=$(cat)
-FILE_PATH=$(echo "$INPUT" | python3 -c "import json,sys; d=json.load(sys.stdin); print(d.get('tool_input',{}).get('file_path',''))" || true)
+if ! FILE_PATH=$(echo "$INPUT" | python3 -c "import json,sys; d=json.load(sys.stdin); print(d.get('tool_input',{}).get('file_path',''))" 2>/dev/null); then
+  echo "VDK ERROR: check-hardcoded-values failed to parse hook input — blocking as precaution" >&2
+  exit 2
+fi
 
 # Only check UI-related files
 case "$FILE_PATH" in
@@ -26,12 +29,15 @@ case "$FILE_PATH" in
 esac
 
 # Get the content being written/edited
-CONTENT=$(echo "$INPUT" | python3 -c "
+if ! CONTENT=$(echo "$INPUT" | python3 -c "
 import json, sys
 d = json.load(sys.stdin)
 ti = d.get('tool_input', {})
 print(ti.get('content') or ti.get('new_string') or '')
-" || true)
+" 2>/dev/null); then
+  echo "VDK ERROR: check-hardcoded-values failed to read file content from hook input — blocking as precaution" >&2
+  exit 2
+fi
 
 if [[ -z "$CONTENT" ]]; then
   exit 0
