@@ -64,8 +64,10 @@ while IFS= read -r md_file; do
       BROKEN_COUNT=$((BROKEN_COUNT + 1))
       BROKEN_DETAILS="${BROKEN_DETAILS}\n  - $(basename "$md_file"): [[${target}]] → file not found"
     elif [[ -n "$section_part" ]]; then
-      # Check if heading exists (case-insensitive, any heading level)
-      if ! grep -qiE "^#{1,6} .*${section_part}" "$target_file" 2>/dev/null; then
+      # Check if heading exists — two-step to avoid regex metacharacter issues:
+      # 1. Extract heading lines with a safe pattern (no user input in regex)
+      # 2. Fixed-string match against section_part (treats + ( ) [ ] etc. as literals)
+      if ! grep -iE "^#{1,6} " "$target_file" 2>/dev/null | grep -qiF "$section_part"; then
         BROKEN_COUNT=$((BROKEN_COUNT + 1))
         BROKEN_DETAILS="${BROKEN_DETAILS}\n  - $(basename "$md_file"): [[${target}]] → heading not found"
       fi
