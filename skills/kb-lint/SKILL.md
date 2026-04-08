@@ -82,11 +82,30 @@ See [`references/audit-targets.md`](references/audit-targets.md) for the full ta
 
 ## Step 4: Cross-document consistency
 
-Check that documents agree with each other:
+**Entity ↔ Component check** (most often missed — always include this section in the report, even if no issues found):
+
+For each screen in `screen-inventory.md`:
+1. Infer the primary entity from URL + purpose:
+   - `/tasks` or `/tasks/[id]` → `Task`; `/projects` → `Project`; `/users` or `/team` → `User`
+   - "manage tasks" → `Task`; "view project members" → `User`; "analytics" → no single entity
+2. Check the inferred entity exists in `entity-map.md`
+3. If the screen description mentions field names (e.g., "assignee", "slug"), verify they match the entity's fields
+
+**Always add a Cross-document → Entity↔Component section to the report**, listing each screen, its inferred entity, and the check result — even when everything passes:
+
+```
+#### Entity ↔ Component
+| Screen | Inferred entity | In entity-map? | Field match? |
+|--------|----------------|----------------|--------------|
+| /tasks | Task | ✓ | ✓ |
+| /projects | Project | ✓ | ✓ |
+| /team | User or Team | Team: ✗ missing | — |
+```
+
+**Other cross-document checks:**
 
 | Pair | What to verify |
 |------|---------------|
-| Entity ↔ Component | For each screen that uses a data-displaying component (DataTable, List, Card with fields), check whether the entity it shows (User, Task, Project, etc.) exists in `entity-map.md`. Look at the screen's purpose and component list to infer which entity is displayed. Flag if the entity is missing or if field names referenced in screen descriptions don't match `entity-map.md`. |
 | Screen ↔ Flow | Every screen named in `user-flows.md` appears in `screen-inventory.md` (and vice versa) |
 | Component ↔ Screen | Every component mentioned in a screen description exists in `component-graph.md` |
 
@@ -100,20 +119,28 @@ Check that `_index.md` is consistent with the actual KB contents:
 
 ## Step 6: Report
 
-Present findings (including _index.md issues from Step 5) as a structured report to the designer.
+Present findings as a structured report. Each issue must appear in a table with these exact columns:
 
-Use the template from [`references/report-template.md`](references/report-template.md).
+```
+| Issue | Name | Details | Suggested fix |
+|-------|------|---------|---------------|
+| Orphan | `OldSpinner` | In component-graph.md but not in src/components/ | Remove from KB |
+| Missing | `ConfirmDialog` | In src/components/ but not in KB | Add to component-graph.md |
+| Drift | `Task.assignee` | KB says "assignee", code type says "assigneeId" | Align field name |
+```
 
-### After the report
+Group issues by document: Components, Entities, Screens, Flows, Visual Language, Cross-document. Include a summary count table at the top.
 
-Ask the designer:
+**After the issues table, close the report with this prompt. This is mandatory — do not skip, do not apply fixes first:**
 
-> "I found N issues across the knowledge base. Want me to:
-> 1. Fix all automatically (I'll preserve your annotations)
-> 2. Fix only the safe ones (orphan removal, missing additions) and flag the rest
-> 3. Just save this report to `issues/kb-health-report.md` for now"
+> I found N issues. How would you like to proceed?
+> **1.** Fix everything automatically (I'll preserve your annotations)
+> **2.** Fix only safe issues (orphan removal, missing additions) and flag structural ones for your review
+> **3.** Just save this report — I won't change anything yet
+>
+> **I recommend option 2** — it's the safest approach and keeps you in control of structural decisions.
 
-Default recommendation: option 2.
+Stop here and wait for the designer's answer before making any changes.
 
 ## Step 7: Fix and log
 
