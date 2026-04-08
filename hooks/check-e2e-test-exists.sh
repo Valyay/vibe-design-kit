@@ -26,11 +26,6 @@ case "$FILE_PATH" in
   *.test.*|*.spec.*|*.stories.*|*.story.*|*.d.ts|*/index.*) exit 0 ;;
 esac
 
-# Only check component-like directories
-case "$FILE_PATH" in
-  */components/*|*/ui/*|*/shared/*|*/common/*|*/features/*|*/modules/*) ;;
-  *) exit 0 ;;
-esac
 
 # Only block NEW files — editing an existing component is fine
 if [[ -f "$FILE_PATH" ]]; then
@@ -38,16 +33,26 @@ if [[ -f "$FILE_PATH" ]]; then
 fi
 
 PROJECT_DIR="${CLAUDE_PROJECT_DIR:-.}"
-NAME_NO_EXT=$(basename "$FILE_PATH" | sed 's/\.[^.]*$//')
-NAME_LOWER=$(echo "$NAME_NO_EXT" | tr '[:upper:]' '[:lower:]')
 
-# Search for a matching e2e spec in common locations
-E2E_EXISTS=false
+# For index files, use the parent directory name as the component name
+NAME_NO_EXT=$(basename "$FILE_PATH" | sed 's/\.[^.]*$//')
+if [[ "$NAME_NO_EXT" == "index" ]]; then
+  NAME_NO_EXT=$(basename "$(dirname "$FILE_PATH")")
+fi
+
+# Normalize: lowercase + CamelCase → kebab-case + strip hyphens for loose match
+NAME_LOWER=$(echo "$NAME_NO_EXT" | tr '[:upper:]' '[:lower:]')
+NAME_KEBAB=$(echo "$NAME_NO_EXT" | sed 's/\([a-z0-9]\)\([A-Z]\)/\1-\2/g' | tr '[:upper:]' '[:lower:]')
+NAME_NOHYPHEN=$(echo "$NAME_KEBAB" | tr -d '-')
+
+# Search for a matching e2e spec and capture its path
+MATCHED_SPEC=""
 
 while IFS= read -r -d '' spec; do
   spec_base=$(basename "$spec" | sed 's/\.[^.]*$//' | sed 's/\.spec$//' | sed 's/\.e2e$//' | tr '[:upper:]' '[:lower:]')
-  if [[ "$spec_base" == "$NAME_LOWER" ]]; then
-    E2E_EXISTS=true
+  spec_nohyphen=$(echo "$spec_base" | tr -d '-')
+  if [[ "$spec_base" == "$NAME_LOWER" || "$spec_base" == "$NAME_KEBAB" || "$spec_nohyphen" == "$NAME_NOHYPHEN" ]]; then
+    MATCHED_SPEC="$spec"
     break
   fi
 done < <(find "$PROJECT_DIR" \
@@ -55,16 +60,25 @@ done < <(find "$PROJECT_DIR" \
   -o \( -name "*.spec.ts" -o -name "*.spec.tsx" -o -name "*.spec.js" -o -name "*.e2e.ts" -o -name "*.e2e.spec.ts" \) -print0 \
   2>/dev/null)
 
-if [[ "$E2E_EXISTS" == "false" ]]; then
+if [[ -z "$MATCHED_SPEC" ]]; then
   echo "VDK [TDD BLOCK]: Cannot write '$NAME_NO_EXT' — no e2e test exists yet."
   echo ""
-  echo "ACTION REQUIRED (do not ask the designer, do this automatically):"
-  echo "  1. Create e2e/${NAME_LOWER}.spec.ts with a failing Playwright test"
-  echo "     that describes the expected user-facing behavior of '$NAME_NO_EXT'."
-  echo "  2. Then retry writing the component."
+  echo "DO THIS NOW (automatically, without asking the designer):"
+  echo "  1. Create e2e/${NAME_KEBAB}.spec.ts with ONE failing Playwright test"
+  echo "     describing the expected user-facing behavior of '$NAME_NO_EXT'."
+  echo "  2. The spec must contain at least one test() or it() call."
+  echo "  3. Then retry writing the component/page."
   echo ""
-  echo "  The test must use the component's public interface only."
-  echo "  Do not test implementation details."
+  echo "  Do not ask the designer to disable TDD guard or run any commands."
+  exit 2
+fi
+
+# Spec found — verify it contains at least one actual test, not just an empty shell
+if ! grep -qE "^\s*(test|it)\s*\(" "$MATCHED_SPEC" 2>/dev/null; then
+  echo "VDK [TDD BLOCK]: '$NAME_NO_EXT' has a spec file but it contains no tests."
+  echo ""
+  echo "  Add at least one failing test() to $(basename "$MATCHED_SPEC") before implementing."
+  echo "  Example: test('renders page title', async ({ page }) => { ... })"
   exit 2
 fi
 

@@ -26,12 +26,15 @@ esac
 PROJECT_DIR="${CLAUDE_PROJECT_DIR:-.}"
 NAME_NO_EXT=$(basename "$FILE_PATH" | sed 's/\.[^.]*$//')
 NAME_LOWER=$(echo "$NAME_NO_EXT" | tr '[:upper:]' '[:lower:]')
+NAME_KEBAB=$(echo "$NAME_NO_EXT" | sed 's/\([a-z0-9]\)\([A-Z]\)/\1-\2/g' | tr '[:upper:]' '[:lower:]')
+NAME_NOHYPHEN=$(echo "$NAME_KEBAB" | tr -d '-')
 
 # Find the matching e2e spec file
 SPEC_FILE=""
 while IFS= read -r -d '' spec; do
   spec_base=$(basename "$spec" | sed 's/\.[^.]*$//' | sed 's/\.spec$//' | sed 's/\.e2e$//' | tr '[:upper:]' '[:lower:]')
-  if [[ "$spec_base" == "$NAME_LOWER" ]]; then
+  spec_nohyphen=$(echo "$spec_base" | tr -d '-')
+  if [[ "$spec_base" == "$NAME_LOWER" || "$spec_base" == "$NAME_KEBAB" || "$spec_nohyphen" == "$NAME_NOHYPHEN" ]]; then
     SPEC_FILE="$spec"
     break
   fi
