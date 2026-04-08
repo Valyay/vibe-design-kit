@@ -12,12 +12,6 @@ fi
 INPUT=$(cat)
 FILE_PATH=$(echo "$INPUT" | python3 -c "import json,sys; d=json.load(sys.stdin); print(d.get('tool_input',{}).get('file_path',''))" || true)
 
-# Only check component files in component-like directories
-case "$FILE_PATH" in
-  */components/*|*/ui/*|*/shared/*|*/common/*) ;;
-  *) exit 0 ;;
-esac
-
 # Only check actual component files
 case "$FILE_PATH" in
   *.tsx|*.jsx|*.vue|*.svelte) ;;
