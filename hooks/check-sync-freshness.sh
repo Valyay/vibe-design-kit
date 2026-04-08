@@ -24,14 +24,15 @@ if [[ -z "$LAST_DATE" ]]; then
 fi
 
 # Calculate days since last sync (macOS and GNU date compatible)
-if date -j -f "%Y-%m-%d" "$LAST_DATE" "+%s" &>/dev/null; then
-  # macOS
-  LAST_TS=$(date -j -f "%Y-%m-%d" "$LAST_DATE" "+%s")
-  NOW_TS=$(date "+%s")
+NOW_TS=$(date "+%s")
+LAST_TS=""
+if LAST_TS=$(date -j -f "%Y-%m-%d" "$LAST_DATE" "+%s" 2>/dev/null); then
+  :  # macOS
+elif LAST_TS=$(date -d "$LAST_DATE" "+%s" 2>/dev/null); then
+  :  # GNU/Linux
 else
-  # GNU/Linux
-  LAST_TS=$(date -d "$LAST_DATE" "+%s")
-  NOW_TS=$(date "+%s")
+  echo "VDK: Cannot parse sync date '${LAST_DATE}' in _sync-log.md — run the sync skill to reset it."
+  exit 0
 fi
 
 DAYS_AGO=$(( (NOW_TS - LAST_TS) / 86400 ))
@@ -74,10 +75,14 @@ for doc in entity-map component-graph screen-inventory user-flows visual-languag
   [[ -z "$DOC_DATE" ]] && continue          # null or not yet populated — skip
   [[ "$DOC_DATE" == "null" ]] && continue
 
-  if date -j -f "%Y-%m-%d" "$DOC_DATE" "+%s" &>/dev/null; then
-    DOC_TS=$(date -j -f "%Y-%m-%d" "$DOC_DATE" "+%s")
+  DOC_TS=""
+  if DOC_TS=$(date -j -f "%Y-%m-%d" "$DOC_DATE" "+%s" 2>/dev/null); then
+    :  # macOS
+  elif DOC_TS=$(date -d "$DOC_DATE" "+%s" 2>/dev/null); then
+    :  # GNU/Linux
   else
-    DOC_TS=$(date -d "$DOC_DATE" "+%s")
+    STALE_DOCS="${STALE_DOCS} ${doc}(unparseable-date)"
+    continue
   fi
 
   DOC_DAYS=$(( (NOW_TS - DOC_TS) / 86400 ))

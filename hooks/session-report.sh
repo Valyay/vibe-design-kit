@@ -40,10 +40,13 @@ suggest()  { SUGGESTIONS="${SUGGESTIONS}  → $1\n"; }
 
 ts_from_date() {
   local d="$1"
-  if date -j -f "%Y-%m-%d" "$d" "+%s" &>/dev/null 2>&1; then
-    date -j -f "%Y-%m-%d" "$d" "+%s"   # macOS
+  local ts
+  if ts=$(date -j -f "%Y-%m-%d" "$d" "+%s" 2>/dev/null); then
+    echo "$ts"
+  elif ts=$(date -d "$d" "+%s" 2>/dev/null); then
+    echo "$ts"
   else
-    date -d "$d" "+%s" 2>/dev/null || echo "$NOW_TS"  # GNU/Linux
+    return 1  # signal parse failure — caller must handle
   fi
 }
 
@@ -57,8 +60,10 @@ fi
 if [[ -z "$LAST_DATE" ]]; then
   add_warn "vault" "never synced"
   suggest "run the sync skill to populate the knowledge base"
+elif ! LAST_TS=$(ts_from_date "$LAST_DATE"); then
+  add_warn "vault" "unreadable sync date '${LAST_DATE}' — run sync to reset"
+  suggest "sync date in _sync-log.md cannot be parsed — run sync skill to reset it"
 else
-  LAST_TS=$(ts_from_date "$LAST_DATE")
   DAYS_AGO=$(( (NOW_TS - LAST_TS) / 86400 ))
   if [[ "$DAYS_AGO" -gt "$SYNC_STALE_DAYS" ]]; then
     add_warn "vault" "last sync ${DAYS_AGO}d ago (${LAST_DATE})"
