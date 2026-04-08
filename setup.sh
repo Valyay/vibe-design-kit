@@ -419,7 +419,7 @@ if has_dependency "storybook" || has_dependency "@storybook/react" || [[ -d "$TA
   echo "  Onboarding will use Storybook for component screenshots"
 else
   echo "  ⚠  Storybook not found — installing (required for component documentation)..."
-  (cd "$TARGET_REPO" && npx storybook@latest init --yes 2>/dev/null) \
+  (cd "$TARGET_REPO" && npx storybook@latest init --yes --no-dev 2>/dev/null) \
     && echo "  ✓  Storybook installed" \
     || echo "  ✗  Storybook install failed — add manually: npx storybook@latest init"
 fi
@@ -549,15 +549,83 @@ echo "  Graphify (AST-based code knowledge graph):"
 
 if command -v graphify &>/dev/null; then
   echo "    ⏭  graphify already installed"
+elif command -v pipx &>/dev/null; then
+  echo "    Installing graphify..."
+  pipx install graphifyy -q 2>/dev/null \
+    && graphify install 2>/dev/null \
+    && echo "    ✓  graphify (AST analysis + component graph)" \
+    || echo "    ⚠  graphify install failed. Install manually: pipx install graphifyy && graphify install"
 elif command -v pip3 &>/dev/null || command -v pip &>/dev/null; then
   PIP_CMD="$(command -v pip3 || command -v pip)"
   echo "    Installing graphify..."
-  "$PIP_CMD" install graphifyy -q 2>/dev/null \
+  "$PIP_CMD" install --user graphifyy -q 2>/dev/null \
     && graphify install 2>/dev/null \
     && echo "    ✓  graphify (AST analysis + component graph)" \
-    || echo "    ⚠  graphify install failed. Install manually: pip install graphifyy && graphify install"
+    || echo "    ⚠  graphify install failed. Install manually: pipx install graphifyy && graphify install"
 else
-  echo "    ⚠  pip not found — install graphify manually: pip install graphifyy && graphify install"
+  echo "    ⚠  pip/pipx not found — install graphify manually: brew install pipx && pipx install graphifyy && graphify install"
+fi
+
+# ── Code Review Graph — MCP code knowledge graph ─────────────
+echo ""
+echo "  Code Review Graph (MCP-based code graph for token-efficient reviews):"
+
+# Patches invalid hook format written by `code-review-graph install`.
+# It emits top-level "command" keys instead of the required "hooks: []" array,
+# which causes Claude Code to reject the entire settings file.
+patch_crg_hooks() {
+  local settings="$TARGET_REPO/.claude/settings.json"
+  [[ -f "$settings" ]] || return 0
+  python3 - "$settings" <<'PYEOF'
+import json, sys
+
+path = sys.argv[1]
+with open(path) as f:
+    cfg = json.load(f)
+
+def fix_entries(entries):
+    fixed = []
+    for entry in entries:
+        if "command" in entry and "hooks" not in entry:
+            # bare command — wrap it
+            fixed.append({
+                "matcher": entry.get("matcher", ""),
+                "hooks": [{
+                    "type": "command",
+                    "command": entry["command"],
+                    **({"timeout": entry["timeout"] // 1000 if entry["timeout"] >= 100 else entry["timeout"]} if "timeout" in entry else {})
+                }]
+            })
+        else:
+            fixed.append(entry)
+    return fixed
+
+for event in ("SessionStart", "PreToolUse", "PostToolUse"):
+    if event in cfg.get("hooks", {}):
+        cfg["hooks"][event] = fix_entries(cfg["hooks"][event])
+
+with open(path, "w") as f:
+    json.dump(cfg, f, indent=2)
+PYEOF
+}
+
+install_crg() {
+  (cd "$TARGET_REPO" && code-review-graph install --platform claude-code 2>/dev/null) \
+    && patch_crg_hooks \
+    && echo "    ✓  MCP registered with Claude Code (hooks patched)" \
+    || echo "    ⚠  MCP registration failed. Run manually: cd $TARGET_REPO && code-review-graph install --platform claude-code"
+}
+
+if command -v code-review-graph &>/dev/null; then
+  echo "    ⏭  code-review-graph already installed"
+  install_crg
+elif command -v pipx &>/dev/null; then
+  echo "    Installing code-review-graph..."
+  pipx install code-review-graph -q 2>/dev/null \
+    && install_crg \
+    || echo "    ⚠  install failed. Run manually: pipx install code-review-graph && code-review-graph install --platform claude-code"
+else
+  echo "    ⚠  pipx not found — install manually: brew install pipx && pipx install code-review-graph && code-review-graph install --platform claude-code"
 fi
 
 # ── Project-specific skills (framework-dependent) ────────────
@@ -877,7 +945,14 @@ if command -v graphify &>/dev/null; then
   health_ok "graphify" "AST code graph (component-graph.md)"
 else
   health_warn "graphify" "onboarding will fall back to manual analysis" \
-    "pip install graphifyy && graphify install"
+    "brew install pipx && pipx install graphifyy && graphify install"
+fi
+
+if command -v code-review-graph &>/dev/null; then
+  health_ok "code-review-graph" "MCP code graph (8x token reduction on reviews)"
+else
+  health_warn "code-review-graph" "code review will use more tokens without it" \
+    "brew install pipx && pipx install code-review-graph && code-review-graph install --platform claude-code"
 fi
 
 echo ""
@@ -955,8 +1030,11 @@ if [[ $HEALTH_ISSUES -gt 0 ]]; then
   echo "  0. Fix the ${HEALTH_ISSUES} issue(s) shown above"
 fi
 echo "  1. Open Claude Code: cd $TARGET_REPO && claude"
-echo "  2. In Claude Code chat, type: /tdd-guard:setup"
-echo "     (configures test reporters so Claude enforces TDD automatically)"
+echo "  2. Set up TDD Guard — run these 3 commands inside Claude Code:"
+echo "       /plugin marketplace add nizos/tdd-guard"
+echo "       /plugin install tdd-guard@tdd-guard"
+echo "       /tdd-guard:setup"
+echo "     (restart Claude Code if /tdd-guard:setup is not found after install)"
 echo "  3. Run onboarding — it will auto-fill DESIGN.md from your code"
 echo "  4. Review DESIGN.md: approve [auto-filled], resolve [inconsistent]"
 echo "  5. Knowledge base: $KB_DIR"
