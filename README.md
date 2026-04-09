@@ -33,6 +33,7 @@ The script will:
 - Detect and bootstrap missing quality tools (linter, tests, Storybook)
 - Create a knowledge base from template for persistent project memory
 - Copy ready-made prompts and brief examples
+- Capture baseline (screenshots, test results)
 
 ## What's inside
 
@@ -57,14 +58,25 @@ vibe-design-kit/
 ├── hooks/                           # Enforcement hooks (→ .claude/hooks/)
 │   ├── check-hardcoded-values.sh    # Block hardcoded colors, px, font-family
 │   ├── check-duplicate-component.sh # Warn about similar existing components
+│   ├── check-e2e-test-exists.sh     # Block new component without e2e test
+│   ├── check-story-exists.sh        # Remind to create Storybook stories
+│   ├── check-a11y.sh                # Ensure e2e specs include axe assertions
+│   ├── check-mermaid-validity.sh    # Validate Mermaid diagrams in markdown
+│   ├── check-wikilinks.sh           # CLI tool: validate [[wiki-links]] in KB vault
+│   ├── check-kb-drift.sh            # Remind to update KB after code edits
+│   ├── check-sync-freshness.sh      # Warn if knowledge base is stale (SessionStart)
+│   ├── session-report.sh            # Unified session start health report
+│   ├── report-recovery.sh           # Report blocked/fixed issues to designer
 │   ├── protect-vault-baseline.sh    # Block direct edits to baseline/sync-log
-│   ├── post-edit-quality.sh         # Run lint + typecheck after edits
-│   └── check-story-exists.sh        # Remind to create Storybook stories
+│   └── post-edit-quality.sh         # Run lint + typecheck after edits
 │
 ├── skills/
 │   ├── onboarding/SKILL.md          # Full project analysis for designer
 │   ├── sync/SKILL.md                # Keep vault in sync with code changes
-│   └── sync-tokens/SKILL.md         # Figma ↔ DESIGN.md ↔ Code token reconciliation
+│   ├── sync-tokens/SKILL.md         # Figma ↔ DESIGN.md ↔ Code token reconciliation
+│   ├── figma-audit/SKILL.md         # Compare live implementation vs Figma design
+│   ├── visual-diff/SKILL.md         # Before/after screenshot diff report
+│   └── kb-lint/SKILL.md             # Cross-reference KB docs against codebase
 │
 ├── knowledge-base/                  # Project knowledge (code is source of truth)
 │   ├── CLAUDE.md
@@ -99,15 +111,29 @@ Rules in `CLAUDE.md` are instructions — the AI *should* follow them. Hooks are
 the AI *cannot bypass* them. The kit installs shell scripts into `.claude/hooks/` that run
 automatically on every file edit:
 
+**Blocking hooks** (PreToolUse — stop the AI before the action):
+
 | Hook | Event | Action |
 |------|-------|--------|
 | `check-hardcoded-values.sh` | Before Edit/Write | **Blocks** hardcoded hex colors, pixel values, and font-family in UI files |
 | `check-duplicate-component.sh` | Before Write | **Warns** if a similarly-named component already exists |
+| `check-e2e-test-exists.sh` | Before Write | **Blocks** new component creation without a corresponding e2e test |
 | `protect-vault-baseline.sh` | Before Edit/Write | **Warns** when editing baseline and sync-log files directly |
+
+**Advisory hooks** (PostToolUse/SessionStart — inform without blocking):
+
+| Hook | Event | Action |
+|------|-------|--------|
 | `post-edit-quality.sh` | After Edit/Write | Runs lint + typecheck automatically after code changes |
 | `check-story-exists.sh` | After Write | **Reminds** to create a Storybook story for new components |
+| `check-a11y.sh` | After Write | **Reminds** to add axe accessibility assertions to e2e specs |
+| `check-mermaid-validity.sh` | After Edit/Write | Validates Mermaid diagrams in markdown files |
+| `check-kb-drift.sh` | After Edit/Write | **Reminds** to update KB docs when referenced code files change |
+| `check-sync-freshness.sh` | Session start | Warns if knowledge base hasn't been synced in over 7 days |
+| `session-report.sh` | Session start | Unified health report: vault freshness, drift, broken links |
+| `report-recovery.sh` | After Edit/Write | Reports what the AI had to fix so the designer can write better briefs |
 
-Hooks require `jq` to be installed (used for parsing tool input).
+Some hooks require `python3` for heuristic analysis — install it to enable full enforcement.
 
 ## Key principles
 
@@ -122,7 +148,18 @@ Hooks require `jq` to be installed (used for parsing tool input).
 
 ## External tools (installed by setup.sh)
 
-### Skills and plugins
+### Built-in skills (included in this kit)
+
+| Skill | What it does |
+|-------|-------------|
+| `onboarding` | Full project analysis — component graph, tokens, flows |
+| `sync` | Keep knowledge base in sync with code changes |
+| `sync-tokens` | Figma ↔ DESIGN.md ↔ Code token reconciliation |
+| `figma-audit` | Compare live implementation vs Figma design, report discrepancies |
+| `visual-diff` | Before/after screenshot diff — shows what changed visually |
+| `kb-lint` | Cross-reference KB docs against codebase, find stale content |
+
+### External skills and plugins
 
 | Tool | What it does |
 |------|-------------|
